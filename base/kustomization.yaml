@@ -26,28 +26,31 @@ patches:
       name: argocd-repo-server
     patch: |-
       - op: add
-        path: /spec/template/spec/initContainers
+        path: /spec/template/spec/initContainers/-
         value:
-          - name: install-ksops
-            image: viaductoss/ksops:v4.3.2
-            command: ["/bin/sh", "-c"]
-            args:
-              - |
-                echo "Installing KSOPS..."
-                cp /usr/local/bin/ksops /custom-tools/
-                cp /usr/local/bin/kustomize /custom-tools/
-                echo "KSOPS installation complete"
-            volumeMounts:
-              - mountPath: /custom-tools
-                name: custom-tools
+          name: install-ksops
+          image: viaductoss/ksops:v4.3.2
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Installing KSOPS..."
+              cp /usr/local/bin/ksops /custom-tools/
+              cp /usr/local/bin/kustomize /custom-tools/
+              echo "KSOPS installation complete"
+          volumeMounts:
+            - mountPath: /custom-tools
+              name: custom-tools
       - op: add
-        path: /spec/template/spec/volumes
+        path: /spec/template/spec/volumes/-
         value:
-          - name: sops-age-key
-            secret:
-              secretName: sops-age-key
-          - name: custom-tools
-            emptyDir: {}
+          name: sops-age-key
+          secret:
+            secretName: sops-age-key
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: custom-tools
+          emptyDir: {}
       - op: add
         path: /spec/template/spec/containers/0/volumeMounts/-
         value:

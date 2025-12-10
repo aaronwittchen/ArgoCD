@@ -10,12 +10,19 @@ resources:
   - ingress.yaml
   - sops-age-secret.yaml
 
-patchesStrategicMerge:
-  # Enable KSOPS for SOPS decryption
-  - argocd-cm-patch.yaml
-  - repo-server-ksops-patch.yaml
-
 patches:
+  # Enable KSOPS for SOPS decryption - ConfigMap
+  - target:
+      kind: ConfigMap
+      name: argocd-cm
+    patch: |-
+      - op: add
+        path: /data/kustomize.buildOptions
+        value: "--enable-alpha-plugins --enable-exec"
+
+  # Enable KSOPS for SOPS decryption - Repo Server
+  - path: repo-server-ksops-patch.yaml
+
   # Reduce resources for argocd-server
   - target:
       kind: Deployment

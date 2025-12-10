@@ -1,0 +1,10 @@
+# This file references the official ArgoCD installation manifest
+# We use a remote base to stay up-to-date with ArgoCD releases
+
+# To install ArgoCD, this kustomization pulls from the official release
+# You can pin to a specific version or use 'stable' for latest stable
+
+# The actual manifest is pulled from:
+# https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# We'll reference it in kustomization.yaml as a remote resource

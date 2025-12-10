@@ -1,0 +1,35 @@
+# Root Application - App of Apps Pattern
+# This application manages all other applications
+# Deploy this to deploy everything at once!
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git
+    targetRevision: main
+    path: ArgoCD/applications  # Directory containing app manifests
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+
+  # Sync waves ensure proper ordering:
+  # Wave 1: Infrastructure (monitoring)
+  # Wave 2: Platform services (GitLab)
+  # Wave 3: Applications

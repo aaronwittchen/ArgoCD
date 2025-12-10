@@ -1,0 +1,119 @@
+# SOPS Plugin Configuration for ArgoCD
+# This allows ArgoCD to automatically decrypt SOPS-encrypted secrets
+
+---
+# ConfigMap with SOPS plugin configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cmp-plugin
+  namespace: argocd
+data:
+  plugin.yaml: |
+    apiVersion: argoproj.io/v1alpha1
+    kind: ConfigManagementPlugin
+    metadata:
+      name: kustomized-sops
+    spec:
+      version: v1.0
+      init:
+        command: [sh, -c]
+        args:
+          - |
+            if [ -f kustomization.yaml ] || [ -f kustomization.yml ] || [ -f Kustomization ]; then
+              echo "Kustomization file found"
+            fi
+      generate:
+        command: [sh, -c]
+        args:
+          - |
+            if [ -f kustomization.yaml ] || [ -f kustomization.yml ] || [ -f Kustomization ]; then
+              kustomize build . | \
+              sed 's/kind: Secret/kind: SopsSecret/g' | \
+              sops -d --input-type yaml --output-type yaml /dev/stdin
+            else
+              sops -d .
+            fi
+      discover:
+        find:
+          command: [sh, -c, "find . -name '*.enc.yaml' -o -name 'secrets.yaml' -o -name '*secret*.yaml'"]
+
+---
+# Patch repo-server deployment to include SOPS and age
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+spec:
+  template:
+    spec:
+      # Add init container to install SOPS and age
+      initContainers:
+        - name: install-sops
+          image: alpine:latest
+          command:
+            - sh
+            - -c
+            - |
+              apk add --no-cache curl
+              # Install SOPS
+              curl -sL https://github.com/getsops/sops/releases/download/v3.11/sops-v3.8.1.linux.amd64 -o /custom-tools/sops
+              chmod +x /custom-tools/sops
+              # Install age
+              curl -sL https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.1.1-linux-amd64.tar.gz | tar xz -C /tmp
+              mv /tmp/age/age /custom-tools/age
+              mv /tmp/age/age-keygen /custom-tools/age-keygen
+              chmod +x /custom-tools/age /custom-tools/age-keygen
+          volumeMounts:
+            - mountPath: /custom-tools
+              name: custom-tools
+
+      # Mount age key secret
+      volumes:
+        - name: custom-tools
+          emptyDir: {}
+        - name: sops-age-key
+          secret:
+            secretName: sops-age-key
+
+      containers:
+        - name: argocd-repo-server
+          # Mount custom tools
+          volumeMounts:
+            - mountPath: /usr/local/bin/sops
+              name: custom-tools
+              subPath: sops
+            - mountPath: /usr/local/bin/age
+              name: custom-tools
+              subPath: age
+            - mountPath: /sops-age
+              name: sops-age-key
+          env:
+            - name: SOPS_AGE_KEY_FILE
+              value: /sops-age/keys.txt
+
+---
+# Service account needs permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argocd-sops-reader
+rules:
+  - apiGroups: ['']
+    resources: ['secrets']
+    verbs: ['get', 'list']
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argocd-sops-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argocd-sops-reader
+subjects:
+  - kind: ServiceAccount
+    name: argocd-repo-server
+    namespace: argocd

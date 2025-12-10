@@ -1,0 +1,46 @@
+# ArgoCD Application for GitLab
+# This deploys self-hosted GitLab with PostgreSQL and Redis
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitlab
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: '2' # Deploy after monitoring
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git
+    targetRevision: main
+    path: GitLab/overlays/local-path # Or overlays/longhorn
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitlab
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+
+  # GitLab takes time to initialize
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: gitlab
+      jsonPointers:
+        - /spec/template/metadata/annotations

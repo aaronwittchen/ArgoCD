@@ -1,0 +1,113 @@
+# ArgoCD Notifications for Discord
+# Get notified when apps sync, fail, or go out of sync
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  # Discord webhook integration
+  service.webhook.discord: |
+    url: DISCORD_WEBHOOK_URL/slack  # Discord webhooks are Slack-compatible
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  # Templates for Discord messages
+  template.app-deployed: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "content": "✅ Application **{{.app.metadata.name}}** has been deployed to **{{.app.spec.destination.namespace}}**"
+          }
+
+  template.app-health-degraded: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "content": "⚠️ Application **{{.app.metadata.name}}** health is **{{.app.status.health.status}}**"
+          }
+
+  template.app-sync-failed: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "content": "❌ Application **{{.app.metadata.name}}** sync failed: {{.app.status.operationState.message}}"
+          }
+
+  template.app-sync-running: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "content": "🔄 Syncing application **{{.app.metadata.name}}**..."
+          }
+
+  template.app-sync-succeeded: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "content": "✅ Application **{{.app.metadata.name}}** sync succeeded"
+          }
+
+  # Triggers - when to send notifications
+  trigger.on-deployed: |
+    - when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
+      send: [app-deployed]
+
+  trigger.on-health-degraded: |
+    - when: app.status.health.status == 'Degraded'
+      send: [app-health-degraded]
+
+  trigger.on-sync-failed: |
+    - when: app.status.operationState.phase in ['Error', 'Failed']
+      send: [app-sync-failed]
+
+  trigger.on-sync-running: |
+    - when: app.status.operationState.phase in ['Running']
+      send: [app-sync-running]
+
+  trigger.on-sync-succeeded: |
+    - when: app.status.operationState.phase in ['Succeeded']
+      send: [app-sync-succeeded]
+
+  # Default subscriptions (applies to all apps)
+  defaultTriggers: |
+    - on-deployed
+    - on-health-degraded
+    - on-sync-failed
+    - on-sync-succeeded
+
+---
+# Secret for Discord webhook URL
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-notifications-secret
+  namespace: argocd
+type: Opaque
+stringData:
+  # CHANGEME: Add your Discord webhook URL
+  discord-webhook-url: "https://discord.com/api/webhooks/YOUR_WEBHOOK_HERE"
+
+---
+# Patch ArgoCD to enable notifications
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+data:
+  # Enable notifications controller
+  application.sync-options: "CreateNamespace=true"

@@ -1,0 +1,9 @@
+# ArgoCD ConfigMap patch to enable KSOPS plugin
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+data:
+  # Enable KSOPS plugin for kustomize
+  kustomize.buildOptions: --enable-alpha-plugins --enable-exec

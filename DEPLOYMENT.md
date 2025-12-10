@@ -538,3 +538,7 @@ local-path-storage local-path-provisioner-7d6dddf9dd-vvvjx 1/1 Running 1 (40m ag
 metallb-system controller-6d9b64d49f-lvwv2 1/1 Running 1 (40m ago) 7h27m
 metallb-system speaker-dtq2t 1/1 Running 2 (40m ago) 7h27m
 k8s-master@k8s-master-VirtualBox:~/Desktop/k8s-setup/ArgoCD$
+
+age14c4u5y4...
+kubectl apply -k "C:\Users\theon\Desktop\main\ArgoCD\overlays\local-path"
+kubectl rollout status deployment argocd-repo-server -n argocd

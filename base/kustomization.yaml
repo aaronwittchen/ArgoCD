@@ -10,6 +10,7 @@ resources:
   # Custom resources
   - namespace.yaml
   - ingress.yaml
+  - sops-age-secret.yaml
 
 # Customize ArgoCD server
 patches:
@@ -85,3 +86,8 @@ patches:
                 limits:
                   cpu: 500m
                   memory: 1Gi
+
+# Patch ConfigMap to enable KSOPS
+patchesStrategicMerge:
+  - argocd-cm-patch.yaml
+  - repo-server-ksops-patch.yaml

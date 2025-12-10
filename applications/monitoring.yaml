@@ -14,9 +14,9 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git
-    targetRevision: main
-    path: Prometheus & Grafana Setup/overlays/local-path  # Or overlays/longhorn
+    repoURL: https://github.com/aaronwittchen/Prometheus-Grafana-Setup.git
+    targetRevision: master
+    path: overlays/local-path  # Or overlays/longhorn
 
   destination:
     server: https://kubernetes.default.svc

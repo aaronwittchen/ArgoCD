@@ -13,8 +13,8 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git
-    targetRevision: main
+    repoURL: https://github.com/aaronwittchen/ArgoCD.git
+    targetRevision: master
     path: GitLab/overlays/local-path # Or overlays/longhorn
 
   destination:

@@ -13,9 +13,9 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git
-    targetRevision: main
-    path: ArgoCD/applications  # Directory containing app manifests
+    repoURL: https://github.com/aaronwittchen/ArgoCD.git
+    targetRevision: master
+    path: applications  # Directory containing app manifests
 
   destination:
     server: https://kubernetes.default.svc

@@ -37,16 +37,23 @@ data:
         find:
           command: [sh, -c, "find . -name '*.enc.yaml' -o -name 'secrets.yaml' -o -name '*secret*.yaml'"]
 ---
-# Patch repo-server deployment to include SOPS and age
+# Get the existing deployment and patch it
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: argocd-repo-server
   namespace: argocd
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
   template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-repo-server
     spec:
-      # Add init container to install SOPS and age
+      serviceAccountName: argocd-repo-server
       initContainers:
         - name: install-sops
           image: alpine:3.20
@@ -55,10 +62,8 @@ spec:
             - -c
             - |
               apk add --no-cache curl
-              # Install SOPS v3.11.0
               curl -sL https://github.com/getsops/sops/releases/download/v3.11.0/sops-v3.11.0.linux.amd64 -o /custom-tools/sops
               chmod +x /custom-tools/sops
-              # Install age v1.2.1
               curl -sL https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.2.1-linux-amd64.tar.gz | tar xz -C /tmp
               mv /tmp/age/age /custom-tools/age
               mv /tmp/age/age-keygen /custom-tools/age-keygen
@@ -66,16 +71,49 @@ spec:
           volumeMounts:
             - mountPath: /custom-tools
               name: custom-tools
-      # Mount age key secret
-      volumes:
-        - name: custom-tools
-          emptyDir: {}
-        - name: sops-age-key
-          secret:
-            secretName: sops-age-key
       containers:
         - name: argocd-repo-server
-          # Mount custom tools
+          image: quay.io/argoproj/argocd:v3.2.1
+          imagePullPolicy: IfNotPresent
+          command:
+            - /usr/local/bin/argocd-repo-server
+          ports:
+            - containerPort: 8081
+              name: repo-server
+            - containerPort: 8084
+              name: metrics
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz?full=true
+              port: 8084
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8084
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          env:
+            - name: SOPS_AGE_KEY_FILE
+              value: /sops-age/keys.txt
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: argocd-redis
+                  key: auth
+                  optional: false
           volumeMounts:
             - mountPath: /usr/local/bin/sops
               name: custom-tools
@@ -85,9 +123,55 @@ spec:
               subPath: age
             - mountPath: /sops-age
               name: sops-age-key
-          env:
-            - name: SOPS_AGE_KEY_FILE
-              value: /sops-age/keys.txt
+            - mountPath: /app/config/ssh
+              name: ssh-known-hosts
+            - mountPath: /app/config/tls
+              name: tls-certs
+            - mountPath: /app/config/gpg/source
+              name: gpg-keys
+            - mountPath: /app/config/gpg/keys
+              name: gpg-keyring
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /helm-working-dir
+              name: helm-working-dir
+            - mountPath: /home/argocd/cmp-server/plugins
+              name: plugins
+            - mountPath: /app/config/reposerver/tls
+              name: argocd-repo-server-tls
+      volumes:
+        - name: custom-tools
+          emptyDir: {}
+        - name: sops-age-key
+          secret:
+            secretName: sops-age-key
+            optional: false
+        - name: ssh-known-hosts
+          configMap:
+            name: argocd-ssh-known-hosts-cm
+            optional: false
+        - name: tls-certs
+          configMap:
+            name: argocd-tls-certs-cm
+            optional: false
+        - name: gpg-keys
+          configMap:
+            name: argocd-gpg-keys-cm
+            optional: false
+        - name: gpg-keyring
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: helm-working-dir
+          emptyDir: {}
+        - name: argocd-repo-server-tls
+          secret:
+            secretName: argocd-repo-server-tls
+            optional: true
+        - name: plugins
+          emptyDir: {}
+      nodeSelector:
+        kubernetes.io/os: linux
 ---
 # Service account needs permissions
 apiVersion: rbac.authorization.k8s.io/v1

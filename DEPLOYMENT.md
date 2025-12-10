@@ -194,40 +194,6 @@ kubectl create secret generic sops-age-key \
 # Apply SOPS plugin configuration
 kubectl apply -f examples/sops-plugin.yaml
 
-or patch
-kubectl -n argocd patch deployment argocd-repo-server --patch '{
-  "spec": {
-    "template": {
-      "spec": {
-        "initContainers": [
-          {
-            "name": "install-sops",
-            "image": "alpine:latest",
-            "command": ["sh", "-c", "apk add --no-cache curl && curl -sL https://github.com/getsops/sops/releases/download/v3.11/sops-v3.8.1.linux.amd64 -o /custom-tools/sops && chmod +x /custom-tools/sops && curl -sL https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.1.1-linux-amd64.tar.gz | tar xz -C /tmp && mv /tmp/age/age /custom-tools/age && mv /tmp/age/age-keygen /custom-tools/age-keygen && chmod +x /custom-tools/age /custom-tools/age-keygen"],
-            "volumeMounts": [{"mountPath":"/custom-tools","name":"custom-tools"}]
-          }
-        ],
-        "volumes": [
-          {"name":"custom-tools","emptyDir":{}},
-          {"name":"sops-age-key","secret":{"secretName":"sops-age-key"}}
-        ],
-        "containers":[
-          {
-            "name":"argocd-repo-server",
-            "volumeMounts":[
-              {"mountPath":"/usr/local/bin/sops","name":"custom-tools","subPath":"sops"},
-              {"mountPath":"/usr/local/bin/age","name":"custom-tools","subPath":"age"},
-              {"mountPath":"/sops-age","name":"sops-age-key"}
-            ],
-            "env":[{"name":"SOPS_AGE_KEY_FILE","value":"/sops-age/keys.txt"}]
-          }
-        ]
-      }
-    }
-  }
-}'
-
-
 # Restart repo server
 kubectl rollout restart deployment/argocd-repo-server -n argocd
 ```
@@ -548,3 +514,27 @@ argocd account update-password
 5. **Create projects**: Organize your applications
 
 ArgoCD is now managing your cluster via GitOps!
+
+k8s-master@k8s-master-VirtualBox:~/Desktop/k8s-setup/ArgoCD$ kubectl get pods -A
+NAMESPACE NAME READY STATUS RESTARTS AGE
+argocd argocd-application-controller-0 1/1 Running 1 (40m ago) 7h16m
+argocd argocd-applicationset-controller-746fdcd449-2pwtx 1/1 Running 1 (40m ago) 7h16m
+argocd argocd-dex-server-59546996c4-9cq9m 1/1 Running 1 (40m ago) 7h16m
+argocd argocd-notifications-controller-5b5746f6bb-rvcd8 1/1 Running 1 (40m ago) 5h14m
+argocd argocd-redis-5d96cc9756-27qld 1/1 Running 1 (40m ago) 7h16m
+argocd argocd-repo-server-7dd64fd479-ftqk6 1/1 Running 0 31s
+argocd argocd-server-6cc947fd59-n8xlt 1/1 Running 1 (40m ago) 6h34m
+ingress-nginx ingress-nginx-controller-5545778fcd-w6fxq 1/1 Running 1 (40m ago) 7h58m
+kube-system calico-kube-controllers-689744956f-b9rn5 1/1 Running 6 (40m ago) 41d
+kube-system calico-node-ktw77 1/1 Running 6 (40m ago) 41d
+kube-system coredns-668d6bf9bc-2x2q2 1/1 Running 6 (40m ago) 41d
+kube-system coredns-668d6bf9bc-hr2qv 1/1 Running 6 (40m ago) 41d
+kube-system etcd-k8s-master-virtualbox 1/1 Running 11 (40m ago) 41d
+kube-system kube-apiserver-k8s-master-virtualbox 1/1 Running 6 (40m ago) 41d
+kube-system kube-controller-manager-k8s-master-virtualbox 1/1 Running 8 (40m ago) 41d
+kube-system kube-proxy-mr9m9 1/1 Running 6 (40m ago) 41d
+kube-system kube-scheduler-k8s-master-virtualbox 1/1 Running 9 (40m ago) 41d
+local-path-storage local-path-provisioner-7d6dddf9dd-vvvjx 1/1 Running 1 (40m ago) 7h28m
+metallb-system controller-6d9b64d49f-lvwv2 1/1 Running 1 (40m ago) 7h27m
+metallb-system speaker-dtq2t 1/1 Running 2 (40m ago) 7h27m
+k8s-master@k8s-master-VirtualBox:~/Desktop/k8s-setup/ArgoCD$

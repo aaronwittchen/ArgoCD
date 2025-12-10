@@ -13,7 +13,7 @@ resources:
 
 # Customize ArgoCD server
 patches:
-  # Reduce resources for homelab and enable insecure mode
+  # Reduce resources for homelab
   - target:
       kind: Deployment
       name: argocd-server
@@ -27,8 +27,6 @@ patches:
           spec:
             containers:
             - name: argocd-server
-              args:
-              - --insecure
               resources:
                 requests:
                   cpu: 100m
@@ -36,6 +34,15 @@ patches:
                 limits:
                   cpu: 200m
                   memory: 256Mi
+
+  # Enable insecure mode for HTTP access
+  - target:
+      kind: Deployment
+      name: argocd-server
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --insecure
 
   - target:
       kind: Deployment

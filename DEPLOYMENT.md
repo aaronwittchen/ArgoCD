@@ -63,13 +63,43 @@ argocd login argocd.192.168.2.207.nip.io
 
 ### Method 1: Via UI
 
+if private repo
+Add the repository in ArgoCD
+
+Open ArgoCD UI → Settings → Repositories → Connect Repo.
+
+Use these values:
+
+Repo URL: https://github.com/aaronwittchen/Prometheus-Grafana-Setup.git
+
+Username: your GitHub username
+
+Password / Token: your PAT
+
+Test connection → Save.
+
 1. Click **+ New App**
 2. Fill in details:
    - **Application Name**: monitoring-stack
    - **Project**: default
    - **Sync Policy**: Automatic
+   - Enable Auto-Sync
+     Prune Resources
+     Self Heal
+     Set Deletion Finalizer
+     Sync Options
+     Skip Schema Validation
+     Auto-Create Namespace
+     Prune Last
+     Apply Out of Sync Only
+     Respect Ignore Differences
+     Server-Side Apply
+     Prune Propagation Policy:
+     foreground
+     Replace
+     Retry
    - **Repository URL**: https://github.com/YOUR_USERNAME/YOUR_REPO
-   - **Path**: Prometheus & Grafana Setup/overlays/local-path
+   - **Path**: overlays/local-path
    - **Cluster URL**: https://kubernetes.default.svc
    - **Namespace**: monitoring
 3. Click **Create**
@@ -123,6 +153,15 @@ age-keygen -o ~/.config/sops/age/keys.txt
 grep 'public key:' ~/.config/sops/age/keys.txt
 ```
 
+ubunut
+sudo apt update
+sudo apt install age -y
+age --version
+mkdir -p ~/.config/sops/age
+age-keygen -o ~/.config/sops/age/keys.txt
+grep 'public key:' ~/.config/sops/age/keys.txt
+age14c4u5y4uf869...
+
 ### Step 2: Configure SOPS in Repository
 
 ```bash
@@ -138,6 +177,12 @@ git add .sops.yaml
 git commit -m "Add SOPS configuration"
 ```
 
+SOPS uses the public key to encrypt files. Only someone with the corresponding private key can decrypt them.
+
+Committing the public key to your repo is normal and intended, so that anyone who has the private key can decrypt the secrets.
+
+Your private key must never be committed.
+
 ### Step 3: Install SOPS Plugin in ArgoCD
 
 ```bash
@@ -149,9 +194,48 @@ kubectl create secret generic sops-age-key \
 # Apply SOPS plugin configuration
 kubectl apply -f examples/sops-plugin.yaml
 
+or patch
+kubectl -n argocd patch deployment argocd-repo-server --patch '{
+  "spec": {
+    "template": {
+      "spec": {
+        "initContainers": [
+          {
+            "name": "install-sops",
+            "image": "alpine:latest",
+            "command": ["sh", "-c", "apk add --no-cache curl && curl -sL https://github.com/getsops/sops/releases/download/v3.11/sops-v3.8.1.linux.amd64 -o /custom-tools/sops && chmod +x /custom-tools/sops && curl -sL https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.1.1-linux-amd64.tar.gz | tar xz -C /tmp && mv /tmp/age/age /custom-tools/age && mv /tmp/age/age-keygen /custom-tools/age-keygen && chmod +x /custom-tools/age /custom-tools/age-keygen"],
+            "volumeMounts": [{"mountPath":"/custom-tools","name":"custom-tools"}]
+          }
+        ],
+        "volumes": [
+          {"name":"custom-tools","emptyDir":{}},
+          {"name":"sops-age-key","secret":{"secretName":"sops-age-key"}}
+        ],
+        "containers":[
+          {
+            "name":"argocd-repo-server",
+            "volumeMounts":[
+              {"mountPath":"/usr/local/bin/sops","name":"custom-tools","subPath":"sops"},
+              {"mountPath":"/usr/local/bin/age","name":"custom-tools","subPath":"age"},
+              {"mountPath":"/sops-age","name":"sops-age-key"}
+            ],
+            "env":[{"name":"SOPS_AGE_KEY_FILE","value":"/sops-age/keys.txt"}]
+          }
+        ]
+      }
+    }
+  }
+}'
+
+
 # Restart repo server
 kubectl rollout restart deployment/argocd-repo-server -n argocd
 ```
+
+curl -L -o sops https://github.com/getsops/sops/releases/download/v3.11.0/sops-v3.11.0.linux.amd64
+chmod +x sops
+sudo mv sops /usr/local/bin/
+sops --version
 
 ### Step 4: Encrypt Secrets
 
@@ -192,9 +276,17 @@ kubectl edit configmap argocd-notifications-cm -n argocd
 # 2. Replace DISCORD_WEBHOOK_URL
 kubectl apply -f examples/notifications-discord.yaml
 
+ kubectl create secret generic argocd-notifications-secret \
+    -n argocd \
+    --from-literal=discord-webhook-url='https://discord.com/api/webhooks/YOUR_NEW_WEBHOOK_HERE/slack'
 # Restart notifications controller
 kubectl rollout restart deployment/argocd-notifications-controller -n argocd
 ```
+
+sudo curl -sSL -o /usr/local/bin/argocd \
+ https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+sudo chmod +x /usr/local/bin/argocd
+argocd version
 
 ### Step 3: Test Notification
 
@@ -391,7 +483,7 @@ Control deployment order:
 ```yaml
 metadata:
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: '1'
 ```
 
 ### 4. Encrypt Secrets

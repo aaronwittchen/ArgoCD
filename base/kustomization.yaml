@@ -85,7 +85,3 @@ patches:
                 limits:
                   cpu: 500m
                   memory: 1Gi
-
-labels:
-  - pairs:
-      managed-by: kustomize

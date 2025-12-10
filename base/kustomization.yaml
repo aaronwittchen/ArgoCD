@@ -10,6 +10,11 @@ resources:
   - ingress.yaml
   - sops-age-secret.yaml
 
+patchesStrategicMerge:
+  # Enable KSOPS for SOPS decryption
+  - argocd-cm-patch.yaml
+  - repo-server-ksops-patch.yaml
+
 patches:
   # Reduce resources for argocd-server
   - target:

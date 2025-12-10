@@ -20,8 +20,61 @@ patches:
         path: /data/kustomize.buildOptions
         value: "--enable-alpha-plugins --enable-exec"
 
-  # Enable KSOPS for SOPS decryption - Repo Server
-  - path: repo-server-ksops-patch.yaml
+  # Enable KSOPS for SOPS decryption - Repo Server init container
+  - target:
+      kind: Deployment
+      name: argocd-repo-server
+    patch: |-
+      - op: add
+        path: /spec/template/spec/initContainers
+        value:
+          - name: install-ksops
+            image: viaductoss/ksops:v4.3.2
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                echo "Installing KSOPS..."
+                cp /usr/local/bin/ksops /custom-tools/
+                cp /usr/local/bin/kustomize /custom-tools/
+                echo "KSOPS installation complete"
+            volumeMounts:
+              - mountPath: /custom-tools
+                name: custom-tools
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: sops-age-key
+            secret:
+              secretName: sops-age-key
+          - name: custom-tools
+            emptyDir: {}
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          mountPath: /sops-age
+          name: sops-age-key
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          mountPath: /usr/local/bin/ksops
+          name: custom-tools
+          subPath: ksops
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          mountPath: /usr/local/bin/kustomize
+          name: custom-tools
+          subPath: kustomize
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: XDG_CONFIG_HOME
+          value: /.config
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: SOPS_AGE_KEY_FILE
+          value: /sops-age/keys.txt
 
   # Reduce resources for argocd-server
   - target:

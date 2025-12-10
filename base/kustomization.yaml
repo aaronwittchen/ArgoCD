@@ -27,6 +27,9 @@ patches:
           limits:
             cpu: 200m
             memory: 256Mi
+      - op: add
+        path: /spec/template/spec/containers/0/command/-
+        value: --insecure
 
   - target:
       kind: Deployment

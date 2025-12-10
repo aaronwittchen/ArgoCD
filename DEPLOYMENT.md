@@ -275,6 +275,7 @@ kubectl edit configmap argocd-notifications-cm -n argocd
 # 1. Edit examples/notifications-discord.yaml
 # 2. Replace DISCORD_WEBHOOK_URL
 kubectl apply -f examples/notifications-discord.yaml
+https://discord.com/api/webhooks/1448344302051786752/HH38jaL3mP9wj2vYEMBHYOCg3yD4b00_PfFZygywUCGIesMCf7TLZ-u_oMWK_rqReOVC
 
  kubectl create secret generic argocd-notifications-secret \
     -n argocd \

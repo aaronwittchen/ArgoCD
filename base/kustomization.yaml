@@ -27,8 +27,7 @@ patches:
           spec:
             containers:
             - name: argocd-server
-              command:
-              - argocd-server
+              args:
               - --insecure
               resources:
                 requests:

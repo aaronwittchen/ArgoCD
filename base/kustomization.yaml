@@ -9,6 +9,7 @@ resources:
 
   # Custom resources
   - namespace.yaml
+  - ingress.yaml
 
 # Customize ArgoCD server
 patches:

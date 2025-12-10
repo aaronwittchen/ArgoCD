@@ -5,7 +5,6 @@ namespace: argocd
 
 resources:
   - ../../base
-  - ../../base/ingress.yaml
 
 # ArgoCD uses emptyDir by default for repo-server
 # No PVC patches needed for local-path

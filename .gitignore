@@ -1,0 +1,46 @@
+# AGE private keys - NEVER commit these!
+keys.txt
+**/keys.txt
+age-key.txt
+*-age-key.txt
+sops-age-key.txt
+*-private-key.txt
+*.age
+
+# SOPS AGE keys directory
+.age/
+.config/sops/
+
+# SOPS decrypted files
+*.dec.yaml
+*.dec.yml
+*.decrypted.yaml
+*.decrypted.yml
+
+# Environment files with secrets
+.env
+.env.*
+*.env
+
+# Kubeconfig files (may contain tokens)
+kubeconfig
+kubeconfig.yaml
+.kubeconfig
+
+# IDE and editor files
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.temp

@@ -12,6 +12,16 @@ Complete ArgoCD deployment for managing your Kubernetes applications via GitOps.
 - **SSO Ready**: OIDC/LDAP integration examples
 - **Notifications**: Slack/Discord alerts for sync events
 
+## Security Warning
+
+**CRITICAL**: This setup includes SOPS encryption for secrets. You **MUST** follow these security practices:
+
+1. **NEVER commit your AGE private key to git**
+2. **ALWAYS create the sops-age-key secret manually** (see SOPS Integration section)
+3. **Enable TLS** for production deployments (cert-manager recommended)
+4. **Use the homelab project** for RBAC (already configured in applications)
+5. **Review sync policies** before enabling automated sync in production
+
 ## Quick Start
 
 ### Prerequisites
@@ -19,19 +29,40 @@ Complete ArgoCD deployment for managing your Kubernetes applications via GitOps.
 - Kubernetes cluster (1.24+)
 - kubectl configured
 - Git repository for storing manifests
+- age-keygen installed for SOPS encryption
+- (Optional) cert-manager for TLS certificates
 
 ### Install ArgoCD
 
-```bash
-# Method 1: Quick install (for testing)
-kubectl apply -k base
+**IMPORTANT**: Before installing, you must create the SOPS AGE secret manually!
 
-# Method 2: With custom configuration
+```bash
+# Step 1: Generate AGE key (if you don't have one)
+age-keygen -o ~/.config/sops/age/keys.txt
+
+# Step 2: Create the SOPS secret in ArgoCD namespace
+kubectl create namespace argocd
+kubectl create secret generic sops-age-key \
+  --from-file=keys.txt=$HOME/.config/sops/age/keys.txt \
+  -n argocd
+
+# Step 3: Apply ArgoCD (choose your storage overlay)
+# For local-path provisioner:
 kubectl apply -k overlays/local-path
 
-# Wait for ready
+# For Longhorn:
+# kubectl apply -k overlays/longhorn
+
+# Step 4: Wait for ready
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
 ```
+
+### Important Notes
+
+- The base configuration uses the **homelab** project for RBAC
+- TLS is **enabled by default** - update ingress hostname in your overlay
+- Automatic sync is enabled with `prune` and `selfHeal`
+- Resource limits are optimized for homelab (see Resource Allocation)
 
 ### Access ArgoCD
 
@@ -156,49 +187,153 @@ kubectl apply -f applications/root.yaml
 
 ### Setup SOPS with ArgoCD
 
+**SECURITY CRITICAL**: The AGE private key should **NEVER** be committed to git!
+
 ```bash
-# 1. Create age key for SOPS
+# 1. Generate AGE key (if you don't have one)
 age-keygen -o ~/.config/sops/age/keys.txt
 
-# 2. Create secret in ArgoCD namespace
+# 2. Save your public key from the output
+# Example: age14c4u5y4uf869su746ghhear0ys4p6fuj6r0pvzrujj03dwh3xals40k30e
+
+# 3. Update .sops.yaml with your public key
+# Edit: ArgoCD/.sops.yaml and replace the age public key
+
+# 4. Create secret in ArgoCD namespace (MUST be done manually!)
 kubectl create secret generic sops-age-key \
   -n argocd \
   --from-file=keys.txt=$HOME/.config/sops/age/keys.txt
 
-# 3. Install SOPS plugin
-kubectl apply -f examples/sops-plugin.yaml
+# 5. Verify the secret was created
+kubectl get secret sops-age-key -n argocd
 
-# 4. Restart ArgoCD repo server
-kubectl rollout restart deployment/argocd-repo-server -n argocd
+# IMPORTANT: The base/sops-age-secret.yaml file is a TEMPLATE only!
+# DO NOT uncomment or apply it - create the secret manually as shown above.
 ```
 
 ### Use SOPS-Encrypted Secrets
 
+The `.sops.yaml` file is configured to encrypt specific fields automatically:
+
 ```bash
-# Encrypt secret
+# Encrypt a Kubernetes secret (encrypts data/stringData fields only)
 sops -e -i ../monitoring/base/grafana/secret.yaml
 
-# Commit to Git
-git add ../monitoring/base/grafana/secret.yaml
-git commit -m "Add encrypted secrets"
+# Or encrypt the entire file
+sops -e -i secret.yaml
 
-# ArgoCD will automatically decrypt during sync
+# Edit encrypted file
+sops ../monitoring/base/grafana/secret.yaml
+
+# Commit to Git (only encrypted version is committed)
+git add ../monitoring/base/grafana/secret.yaml
+git commit -m "Add encrypted Grafana secret"
+git push
+
+# ArgoCD will automatically decrypt during sync using the AGE key
+```
+
+### SOPS Configuration
+
+The `.sops.yaml` file defines encryption rules:
+
+```yaml
+creation_rules:
+  - path_regex: .*\.(yaml|yml|json|env|ini)$
+    age: >-
+      YOUR_AGE_PUBLIC_KEY_HERE
+    encrypted_regex: '^(data|stringData|password|token|key|secret)$'
+```
+
+This ensures only sensitive fields are encrypted, keeping the rest readable in git.
+
+## TLS Configuration
+
+### Default Setup
+
+TLS is **enabled by default** in this setup:
+
+- ArgoCD server runs with HTTPS enabled (not HTTP)
+- Ingress is configured for TLS with force-ssl-redirect
+- Hostname should be configured in the overlay for your environment
+
+### Configure Hostname
+
+Edit the overlay kustomization to set your hostname:
+
+```bash
+# For local-path overlay
+# Edit: overlays/local-path/kustomization.yaml
+# Update the host values in the ingress patch
+
+# For production with cert-manager
+# Uncomment the cert-manager.io/cluster-issuer annotation in base/ingress.yaml
+# and create a ClusterIssuer (letsencrypt-prod recommended)
+```
+
+### With cert-manager
+
+```bash
+# Install cert-manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+
+# Create ClusterIssuer for Let's Encrypt
+kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+
+# Uncomment the cert-manager annotation in base/ingress.yaml
+# cert-manager.io/cluster-issuer: "letsencrypt-prod"
 ```
 
 ## Projects & RBAC
 
-### Create Project
+### Homelab Project
+
+The **homelab** project is **included by default** and all applications use it:
+
+- Defined in: `examples/project-homelab.yaml`
+- Used by: monitoring, gitlab, homepage, root app
+- Includes RBAC roles: admin, readonly
+- Configures allowed repositories and namespaces
+- Enables orphaned resource warnings
 
 ```bash
-# Apply project definition
-kubectl apply -f examples/project-homelab.yaml
+# The project is already included in base/kustomization.yaml
+# All applications are configured to use project: homelab
 
-# Projects organize and restrict app deployment
+# View project details
+kubectl get appproject homelab -n argocd -o yaml
 ```
 
-### Configure RBAC
+### RBAC Roles
 
-See `examples/rbac-policy.yaml` for role configuration.
+The homelab project defines two roles:
+
+1. **Admin Role** (`homelab-admins` group)
+   - Full access to applications, repositories, and clusters
+   - Can sync, delete, and manage all resources
+
+2. **Read-only Role** (`homelab-viewers` group)
+   - View applications only
+   - Cannot sync or modify resources
+
+### Configure Users
+
+See ArgoCD documentation for SSO/OIDC integration to map users to these groups.
 
 ## Notifications
 
@@ -311,6 +446,48 @@ argocd app create myapp \
   --dest-namespace myapp \
   --dest-server https://kubernetes.default.svc \
   --sync-policy automated
+```
+
+## Security Checklist
+
+Before deploying to production, verify these security measures:
+
+### Critical Security Items
+
+- [ ] AGE private key is **NOT** committed to git
+- [ ] SOPS secret created manually with `kubectl create secret`
+- [ ] `.sops.yaml` updated with your AGE public key
+- [ ] TLS enabled on ingress (cert-manager recommended for production)
+- [ ] Ingress hostname configured for your environment
+- [ ] ArgoCD admin password changed from default
+- [ ] Applications using `homelab` project (not `default`)
+- [ ] Sync policies reviewed (prune/selfHeal appropriate for your environment)
+
+### Additional Security Recommendations
+
+- [ ] Enable SSO/OIDC authentication
+- [ ] Configure RBAC groups (homelab-admins, homelab-viewers)
+- [ ] Set up notifications for sync failures
+- [ ] Enable sync windows to control deployment timing
+- [ ] Review and restrict project permissions
+- [ ] Enable audit logging
+- [ ] Use network policies to restrict access
+- [ ] Regular backup of ArgoCD resources
+
+### Quick Security Audit
+
+```bash
+# Verify SOPS secret exists (but don't view it!)
+kubectl get secret sops-age-key -n argocd
+
+# Check ingress TLS configuration
+kubectl get ingress argocd-server -n argocd -o yaml | grep -A 5 tls
+
+# Verify applications use homelab project
+kubectl get applications -n argocd -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.project}{"\n"}{end}'
+
+# Check sync policies
+kubectl get applications -n argocd -o yaml | grep -A 10 syncPolicy
 ```
 
 ## Troubleshooting

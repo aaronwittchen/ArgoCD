@@ -4,12 +4,25 @@ metadata:
   name: argocd-server
   namespace: argocd
   annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: 'HTTP'
-    nginx.ingress.kubernetes.io/force-ssl-redirect: 'false'
+    # Use HTTPS backend protocol for ArgoCD
+    nginx.ingress.kubernetes.io/backend-protocol: 'HTTPS'
+    # Force SSL redirect for security
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    # Skip TLS verification since ArgoCD uses self-signed cert
+    nginx.ingress.kubernetes.io/ssl-passthrough: 'false'
+    # For cert-manager integration (uncomment and configure):
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Or use self-signed cert:
+    # cert-manager.io/cluster-issuer: "selfsigned-issuer"
 spec:
   ingressClassName: nginx
+  # TLS configuration
+  tls:
+    - hosts:
+        - argocd.local # Override in overlay
+      secretName: argocd-server-tls
   rules:
-    - host: argocd.192.168.68.200.nip.io
+    - host: argocd.local # Override in overlay
       http:
         paths:
           - path: /

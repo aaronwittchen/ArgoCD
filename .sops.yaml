@@ -1,0 +1,39 @@
+# SOPS Configuration for ArgoCD
+# This file defines how SOPS encrypts secrets in this repository
+#
+# Documentation: https://github.com/mozilla/sops
+
+creation_rules:
+  # Default rule for all files
+  - path_regex: .*\.(yaml|yml|json|env|ini)$
+    age: >-
+      age14c4u5y4uf869su746ghhear0ys4p6fuj6r0pvzrujj03dwh3xals40k30e
+    # Encrypt these fields in Kubernetes secrets
+    encrypted_regex: '^(data|stringData|password|token|key|secret|apiKey|apiToken|credential)$'
+
+  # Example: Different keys for different environments
+  # - path_regex: overlays/production/.*
+  #   age: >-
+  #     age1different_production_key_here
+
+  # Example: Encrypt entire files (no regex)
+  # - path_regex: secrets/.*\.enc\.yaml$
+  #   age: >-
+  #     age14c4u5y4uf869su746ghhear0ys4p6fuj6r0pvzrujj03dwh3xals40k30e
+
+# Example usage:
+#
+# Encrypt a file:
+#   sops -e -i secret.yaml
+#
+# Decrypt a file:
+#   sops -d secret.yaml
+#
+# Edit encrypted file:
+#   sops secret.yaml
+#
+# Create new encrypted file:
+#   sops secret.yaml
+#
+# Encrypt specific keys only:
+#   sops -e --encrypted-regex '^(data|stringData)$' -i secret.yaml

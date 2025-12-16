@@ -1,5 +1,4 @@
-# ArgoCD Application for Homepage Dashboard
-# This deploys the Homepage dashboard with service integrations
+# ArgoCD Application: Homepage Dashboard
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -8,14 +7,14 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "3"  # Deploy after infrastructure and platform services
+    argocd.argoproj.io/sync-wave: '3'
 spec:
-  project: default
+  project: homelab
 
   source:
-    repoURL: https://github.com/aaronwittchen/Homepage
-    targetRevision: master
-    path: overlays/local-path  # Or overlays/longhorn
+    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git # TODO: UPDATE LINK
+    targetRevision: main
+    path: Homepage/overlays/longhorn # or overlays/local-path
 
   destination:
     server: https://kubernetes.default.svc
@@ -36,10 +35,3 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
-
-  # Ignore differences for HPA-managed replicas
-  ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      jsonPointers:
-        - /spec/replicas

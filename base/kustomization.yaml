@@ -8,7 +8,10 @@ resources:
   # Custom resources
   - namespace.yaml
   - ingress.yaml
-  - sops-age-secret.yaml
+  # NOTE: sops-age-secret.yaml is a template only - create the secret manually!
+  # See sops-age-secret.yaml for instructions
+  # Include homelab project for RBAC
+  - ../examples/project-homelab.yaml
 
 patches:
   # Enable KSOPS for SOPS decryption - ConfigMap
@@ -93,16 +96,10 @@ patches:
           limits:
             cpu: 200m
             memory: 256Mi
-  
-  # Enable insecure mode for HTTP access
-  - target:
-      kind: Deployment
-      name: argocd-server
-    patch: |-
-      - op: add
-        path: /spec/template/spec/containers/0/args/-
-        value: --insecure
-  
+
+  # TLS is now enabled via ingress - ArgoCD uses HTTPS by default
+  # Removed --insecure flag for better security
+
   # Reduce resources for application-controller
   - target:
       kind: StatefulSet

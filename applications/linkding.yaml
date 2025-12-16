@@ -1,24 +1,24 @@
-# ArgoCD Application: Monitoring Stack (Prometheus + Grafana + Loki)
+# ArgoCD Application: Linkding Bookmark Manager
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: monitoring
+  name: linkding
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: '1'
+    argocd.argoproj.io/sync-wave: '3'
 spec:
   project: homelab
 
   source:
     repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git # TODO: UPDATE LINK
     targetRevision: main
-    path: Prometheus & Grafana Setup/overlays/longhorn # or overlays/local-path
+    path: linkding
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: linkding
 
   syncPolicy:
     automated:
@@ -39,5 +39,9 @@ spec:
   ignoreDifferences:
     - group: apps
       kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: apps
+      kind: StatefulSet
       jsonPointers:
         - /spec/replicas

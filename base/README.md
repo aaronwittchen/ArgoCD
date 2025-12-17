@@ -19,10 +19,12 @@ Core ArgoCD installation with KSOPS support for encrypted secrets.
 This setup uses Gateway API with Envoy Gateway instead of NGINX Ingress Controller.
 
 **Prerequisites:**
+
 - Envoy Gateway installed in the cluster
 - MetalLB for LoadBalancer IP assignment
 
 **Verify Gateway:**
+
 ```bash
 kubectl get gateway -n envoy-gateway-system
 kubectl get httproute -n argocd

@@ -1,0 +1,79 @@
+# ArgoCD Project for Homelab
+# Projects organize applications and define access controls
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: homelab
+  namespace: argocd
+spec:
+  description: Homelab infrastructure and applications
+
+  # Allow deployments from these Git repositories
+  sourceRepos:
+    - '*'  # Allow all repos (restrict in production)
+
+  # Allow deployments to these namespaces
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+
+  # Cluster-wide resources that can be managed
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+    - group: 'networking.k8s.io'
+      kind: IngressClass
+    - group: 'apiextensions.k8s.io'
+      kind: CustomResourceDefinition
+    - group: 'storage.k8s.io'
+      kind: StorageClass
+
+  # Resources that can be managed within namespaces
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Deny list (optional - restrict dangerous operations)
+  # namespaceResourceBlacklist:
+  #   - group: ''
+  #     kind: ResourceQuota
+  #   - group: ''
+  #     kind: LimitRange
+
+  # RBAC roles for this project
+  roles:
+    # Admin role
+    - name: admin
+      description: Admin access to homelab project
+      policies:
+        - p, proj:homelab:admin, applications, *, homelab/*, allow
+        - p, proj:homelab:admin, repositories, *, *, allow
+        - p, proj:homelab:admin, clusters, *, *, allow
+      groups:
+        - homelab-admins
+
+    # Read-only role
+    - name: readonly
+      description: Read-only access to homelab project
+      policies:
+        - p, proj:homelab:readonly, applications, get, homelab/*, allow
+        - p, proj:homelab:readonly, applications, sync, homelab/*, deny
+      groups:
+        - homelab-viewers
+
+  # Sync windows (optional - restrict when syncs can happen)
+  # syncWindows:
+  #   - kind: allow
+  #     schedule: '0 8 * * 1-5'  # Mon-Fri, 8 AM
+  #     duration: 8h
+  #     applications:
+  #       - '*'
+
+  # Orphaned resources handling
+  orphanedResources:
+    warn: true  # Warn about resources not in Git

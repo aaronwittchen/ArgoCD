@@ -1,4 +1,4 @@
-# AGE private keys - NEVER commit these!
+# AGE private keys
 keys.txt
 **/keys.txt
 age-key.txt
@@ -17,12 +17,12 @@ sops-age-key.txt
 *.decrypted.yaml
 *.decrypted.yml
 
-# Environment files with secrets
+# Environment files
 .env
 .env.*
 *.env
 
-# Kubeconfig files (may contain tokens)
+# Kubeconfig files
 kubeconfig
 kubeconfig.yaml
 .kubeconfig

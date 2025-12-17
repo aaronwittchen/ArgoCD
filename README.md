@@ -12,29 +12,15 @@ Complete ArgoCD deployment for managing your Kubernetes applications via GitOps.
 - **SSO Ready**: OIDC/LDAP integration examples
 - **Notifications**: Slack/Discord alerts for sync events
 
-## Security Warning
+This setup includes SOPS encryption for secrets. You **MUST** follow these security practices:
 
-**CRITICAL**: This setup includes SOPS encryption for secrets. You **MUST** follow these security practices:
-
-1. **NEVER commit your AGE private key to git**
-2. **ALWAYS create the sops-age-key secret manually** (see SOPS Integration section)
-3. **Enable TLS** for production deployments (cert-manager recommended)
-4. **Use the homelab project** for RBAC (already configured in applications)
-5. **Review sync policies** before enabling automated sync in production
+- Always create the sops-age-key secret manually (see SOPS Integration section)
+- Enable TLS for production deployments (cert-manager recommended)
+- Review sync policies before enabling automated sync in production
 
 ## Quick Start
 
-### Prerequisites
-
-- Kubernetes cluster (1.24+)
-- kubectl configured
-- Git repository for storing manifests
-- age-keygen installed for SOPS encryption
-- (Optional) cert-manager for TLS certificates
-
 ### Install ArgoCD
-
-**IMPORTANT**: Before installing, you must create the SOPS AGE secret manually!
 
 ```bash
 # Step 1: Generate AGE key (if you don't have one)
@@ -51,18 +37,11 @@ kubectl create secret generic sops-age-key \
 kubectl apply -k overlays/local-path
 
 # For Longhorn:
-# kubectl apply -k overlays/longhorn
+kubectl apply -k overlays/longhorn
 
 # Step 4: Wait for ready
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
 ```
-
-### Important Notes
-
-- The base configuration uses the **homelab** project for RBAC
-- TLS is **enabled by default** - update ingress hostname in your overlay
-- Automatic sync is enabled with `prune` and `selfHeal`
-- Resource limits are optimized for homelab (see Resource Allocation)
 
 ### Access ArgoCD
 
@@ -84,9 +63,6 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```bash
 # Deploy monitoring stack
 kubectl apply -f applications/monitoring.yaml
-
-# Deploy GitLab
-kubectl apply -f applications/gitlab.yaml
 
 # Or use CLI
 argocd app create monitoring \
@@ -114,65 +90,12 @@ argocd app create monitoring \
 
 ### Resource Allocation
 
-- **argocd-server**: 100m CPU, 128Mi memory
-- **argocd-repo-server**: 100m CPU, 256Mi memory
-- **argocd-application-controller**: 250m CPU, 512Mi memory
-- **argocd-redis**: 50m CPU, 64Mi memory
+- **argocd-server**:
+- **argocd-repo-server**:
+- **argocd-application-controller**:
+- **argocd-redis**:
 
-**Total**: ~500m CPU, ~1Gi memory
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                          Git Repository                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │ Monitoring  │  │   GitLab    │  │    Apps     │        │
-│  │   Stack     │  │             │  │             │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘        │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           │ Git Pull
-                           ▼
-              ┌────────────────────────┐
-              │     ArgoCD Server      │
-              │  ┌──────────────────┐  │
-              │  │  Application     │  │
-              │  │  Controller      │  │
-              │  └──────────────────┘  │
-              └────────────┬───────────┘
-                           │
-                           │ Kubectl Apply
-                           ▼
-              ┌────────────────────────┐
-              │   Kubernetes Cluster   │
-              │  ┌──────────────────┐  │
-              │  │   Applications   │  │
-              │  │                  │  │
-              │  │ • Monitoring     │  │
-              │  │ • GitLab         │  │
-              │  │ • Apps           │  │
-              │  └──────────────────┘  │
-              └────────────────────────┘
-```
-
-## Application Structure
-
-### App of Apps Pattern
-
-```
-applications/
-├── root.yaml              # Root app that manages all apps
-├── monitoring.yaml        # Monitoring stack
-├── gitlab.yaml           # GitLab
-├── infrastructure/       # Core infrastructure
-│   ├── ingress.yaml
-│   ├── cert-manager.yaml
-│   └── longhorn.yaml
-└── apps/                 # Your applications
-    ├── linkding.yaml
-    └── homepage.yaml
-```
+**Total**:
 
 ### Deploy All Apps
 
@@ -187,8 +110,6 @@ kubectl apply -f applications/root.yaml
 
 ### Setup SOPS with ArgoCD
 
-**SECURITY CRITICAL**: The AGE private key should **NEVER** be committed to git!
-
 ```bash
 # 1. Generate AGE key (if you don't have one)
 age-keygen -o ~/.config/sops/age/keys.txt
@@ -199,7 +120,7 @@ age-keygen -o ~/.config/sops/age/keys.txt
 # 3. Update .sops.yaml with your public key
 # Edit: ArgoCD/.sops.yaml and replace the age public key
 
-# 4. Create secret in ArgoCD namespace (MUST be done manually!)
+# 4. Create secret in ArgoCD namespace (must be done manually!)
 kubectl create secret generic sops-age-key \
   -n argocd \
   --from-file=keys.txt=$HOME/.config/sops/age/keys.txt
@@ -251,7 +172,7 @@ This ensures only sensitive fields are encrypted, keeping the rest readable in g
 
 ### Default Setup
 
-TLS is **enabled by default** in this setup:
+TLS is enabled by default in this setup:
 
 - ArgoCD server runs with HTTPS enabled (not HTTP)
 - Ingress is configured for TLS with force-ssl-redirect
@@ -303,7 +224,7 @@ EOF
 
 ### Homelab Project
 
-The **homelab** project is **included by default** and all applications use it:
+The homelab project is included by default and all applications use it:
 
 - Defined in: `examples/project-homelab.yaml`
 - Used by: monitoring, gitlab, homepage, root app
@@ -324,6 +245,7 @@ kubectl get appproject homelab -n argocd -o yaml
 The homelab project defines two roles:
 
 1. **Admin Role** (`homelab-admins` group)
+
    - Full access to applications, repositories, and clusters
    - Can sync, delete, and manage all resources
 
@@ -375,7 +297,7 @@ Control deployment order:
 ```yaml
 metadata:
   annotations:
-    argocd.argoproj.io/sync-wave: "1"  # Deploy first
+    argocd.argoproj.io/sync-wave: '1' # Deploy first
 ```
 
 ### 4. Health Checks
@@ -398,7 +320,7 @@ ignoreDifferences:
   - group: apps
     kind: Deployment
     jsonPointers:
-      - /spec/replicas  # Ignore HPA changes
+      - /spec/replicas # Ignore HPA changes
 ```
 
 ## CLI Usage
@@ -448,32 +370,6 @@ argocd app create myapp \
   --sync-policy automated
 ```
 
-## Security Checklist
-
-Before deploying to production, verify these security measures:
-
-### Critical Security Items
-
-- [ ] AGE private key is **NOT** committed to git
-- [ ] SOPS secret created manually with `kubectl create secret`
-- [ ] `.sops.yaml` updated with your AGE public key
-- [ ] TLS enabled on ingress (cert-manager recommended for production)
-- [ ] Ingress hostname configured for your environment
-- [ ] ArgoCD admin password changed from default
-- [ ] Applications using `homelab` project (not `default`)
-- [ ] Sync policies reviewed (prune/selfHeal appropriate for your environment)
-
-### Additional Security Recommendations
-
-- [ ] Enable SSO/OIDC authentication
-- [ ] Configure RBAC groups (homelab-admins, homelab-viewers)
-- [ ] Set up notifications for sync failures
-- [ ] Enable sync windows to control deployment timing
-- [ ] Review and restrict project permissions
-- [ ] Enable audit logging
-- [ ] Use network policies to restrict access
-- [ ] Regular backup of ArgoCD resources
-
 ### Quick Security Audit
 
 ```bash
@@ -490,69 +386,11 @@ kubectl get applications -n argocd -o jsonpath='{range .items[*]}{.metadata.name
 kubectl get applications -n argocd -o yaml | grep -A 10 syncPolicy
 ```
 
-## Troubleshooting
-
-### Application Stuck in Progressing
-
-```bash
-# Check app status
-argocd app get APP_NAME
-
-# View sync result
-kubectl describe application APP_NAME -n argocd
-
-# Check controller logs
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-application-controller
-```
-
-### Sync Fails with Permission Error
-
-```bash
-# Check service account
-kubectl get sa -n argocd
-
-# Verify RBAC
-kubectl auth can-i create deployments --as=system:serviceaccount:argocd:argocd-application-controller -n TARGET_NAMESPACE
-```
-
-### SOPS Decryption Fails
-
-```bash
-# Check secret exists
-kubectl get secret sops-age-key -n argocd
-
-# Check age key format
-kubectl get secret sops-age-key -n argocd -o jsonpath='{.data.keys\.txt}' | base64 -d
-
-# Check repo server logs
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-repo-server --tail=50
-```
-
 ## Documentation
 
 - [ArgoCD Docs](https://argo-cd.readthedocs.io/)
 - [Best Practices](https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/)
 - [SOPS Plugin](https://github.com/viaduct-ai/kustomize-sops)
 - [App of Apps](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/)
-
-## Integration with Existing Setup
-
-### Deploy Monitoring Stack
-
-```bash
-kubectl apply -f applications/monitoring.yaml
-```
-
-### Deploy GitLab
-
-```bash
-kubectl apply -f applications/gitlab.yaml
-```
-
-### Deploy Everything
-
-```bash
-kubectl apply -f applications/root.yaml
-```
 
 ArgoCD will manage your entire cluster state via Git!

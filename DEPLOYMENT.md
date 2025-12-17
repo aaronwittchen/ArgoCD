@@ -8,6 +8,10 @@ Complete guide for deploying ArgoCD for GitOps on Kubernetes.
 
 ```bash
 # Deploy ArgoCD
+kubectl apply -k overlays/longhorn
+
+# or
+
 kubectl apply -k overlays/local-path
 
 # Wait for pods to be ready
@@ -16,7 +20,7 @@ kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -
 
 ### Access ArgoCD
 
-#### Option 1: Port-Forward (Quickest)
+#### Option 1: Port-Forward
 
 ```bash
 # Port-forward the UI
@@ -31,11 +35,11 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 # Password: (from above)
 ```
 
-#### Option 2: Ingress (Permanent)
+#### Option 2: Ingress
 
 ```bash
-# Access via Ingress
-echo "http://argocd.192.168.2.207.nip.io"
+# Access via Ingress like
+echo "http://argocd.{IP}.nip.io" # or any other ingress url
 
 # Get password (same as above)
 kubectl -n argocd get secret argocd-initial-admin-secret \

@@ -12,6 +12,8 @@
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)
 
 [![CircleCI](https://circleci.com/gh/aaronwittchen/ArgoCD.svg?style=svg)](https://circleci.com/gh/aaronwittchen/ArgoCD)
+[![ShellCheck](https://github.com/aaronwittchen/ArgoCD/actions/workflows/shellcheck.yaml/badge.svg)](https://github.com/aaronwittchen/ArgoCD/actions/workflows/shellcheck.yaml)
+[![YAML Lint](https://github.com/aaronwittchen/ArgoCD/actions/workflows/yaml.yaml/badge.svg)](https://github.com/aaronwittchen/ArgoCD/actions/workflows/yaml.yaml)
 
 Complete ArgoCD deployment for managing your Kubernetes applications via GitOps.
 

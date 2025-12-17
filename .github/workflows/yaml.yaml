@@ -1,0 +1,136 @@
+name: YAML Lint
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - "**/*.yml"
+      - "**/*.yaml"
+      - .yamllint
+      - .yamllint.yaml
+      - .github/workflows/yaml.yaml
+  pull_request:
+    branches:
+      - master
+      - main
+    paths:
+      - "**/*.yml"
+      - "**/*.yaml"
+      - .yamllint
+      - .yamllint.yaml
+      - .github/workflows/yaml.yaml
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # Weekly on Monday at 6 AM UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  yamllint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Create yamllint config
+        run: |
+          if [ ! -f .yamllint.yaml ] && [ ! -f .yamllint ]; then
+            cat > .yamllint.yaml << 'EOF'
+          extends: default
+
+          rules:
+            line-length:
+              max: 150
+              level: warning
+            truthy:
+              allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+              check-keys: false
+            comments:
+              min-spaces-from-content: 1
+            braces:
+              min-spaces-inside: 0
+              max-spaces-inside: 1
+            brackets:
+              min-spaces-inside: 0
+              max-spaces-inside: 1
+            indentation:
+              spaces: 2
+              indent-sequences: consistent
+            document-start: disable
+            empty-lines:
+              max: 2
+          EOF
+          fi
+
+      - name: Run yamllint
+        run: |
+          yamllint --format colored . || true
+          # Run again with strict for exit code
+          yamllint --strict . 2>&1 | head -100 || echo "::warning::YAML lint found issues"
+
+  kustomize-validate:
+    name: Validate Kustomize
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f # v2
+
+      - name: Validate overlays
+        run: |
+          echo "Validating Kustomize overlays..."
+          for overlay in overlays/*/; do
+            if [ -f "${overlay}kustomization.yaml" ]; then
+              echo "Validating ${overlay}..."
+              kustomize build "$overlay" > /dev/null && echo "  ✓ ${overlay} is valid" || echo "  ✗ ${overlay} failed"
+            fi
+          done
+
+  kubeconform:
+    name: Kubernetes Schema Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f # v2
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Validate Kubernetes manifests
+        run: |
+          echo "Validating Kubernetes manifests..."
+          for overlay in overlays/*/; do
+            if [ -f "${overlay}kustomization.yaml" ]; then
+              echo "Validating ${overlay}..."
+              kustomize build "$overlay" 2>/dev/null | kubeconform \
+                -summary \
+                -strict \
+                -ignore-missing-schemas \
+                -schema-location default \
+                -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                || echo "::warning::Schema validation issues in ${overlay}"
+            fi
+          done

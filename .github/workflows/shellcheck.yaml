@@ -1,0 +1,58 @@
+name: ShellCheck
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - "**/*.sh"
+      - "**/*.bash"
+      - .github/workflows/shellcheck.yaml
+  pull_request:
+    branches:
+      - master
+      - main
+    paths:
+      - "**/*.sh"
+      - "**/*.bash"
+      - .github/workflows/shellcheck.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Find shell scripts
+        id: find-scripts
+        run: |
+          scripts=$(find . -type f \( -name "*.sh" -o -name "*.bash" \) | head -100)
+          if [ -z "$scripts" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No shell scripts found"
+          else
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "Found shell scripts:"
+            echo "$scripts"
+          fi
+
+      - name: Run ShellCheck
+        if: steps.find-scripts.outputs.found == 'true'
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # v2.0.0
+        with:
+          severity: warning
+          scandir: "."
+          format: tty
+        env:
+          SHELLCHECK_OPTS: -e SC1091 -e SC2034

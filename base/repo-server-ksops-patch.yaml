@@ -7,10 +7,19 @@ metadata:
 spec:
   template:
     spec:
+      # Disable service account token automount for init containers (not needed)
+      automountServiceAccountToken: false
       # Add init container to install KSOPS
       initContainers:
         - name: install-ksops
           image: viaductoss/ksops:v4.3.2
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -33,6 +42,12 @@ spec:
 
       containers:
         - name: argocd-repo-server
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               cpu: 100m

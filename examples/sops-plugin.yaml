@@ -54,11 +54,16 @@ spec:
         app.kubernetes.io/name: argocd-repo-server
     spec:
       serviceAccountName: argocd-repo-server
+      automountServiceAccountToken: false
       initContainers:
         - name: install-sops
           image: alpine:3.20
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           command:
             - sh
             - -c
@@ -88,6 +93,10 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           command:
             - /usr/local/bin/argocd-repo-server
           ports:

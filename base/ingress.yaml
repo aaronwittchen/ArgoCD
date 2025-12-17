@@ -16,7 +16,7 @@ spec:
   #       - argocd.local
   #     secretName: argocd-server-tls
   rules:
-    - host: argocd.local
+    - host: argo.k8s.home
       http:
         paths:
           - path: /

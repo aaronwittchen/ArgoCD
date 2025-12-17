@@ -10,8 +10,8 @@ resources:
   - ingress.yaml
   # NOTE: sops-age-secret.yaml is a template only - create the secret manually!
   # See sops-age-secret.yaml for instructions
-  # Include homelab project for RBAC
-  - project-homelab.yaml
+  # NOTE: project-homelab.yaml must be applied AFTER ArgoCD is running:
+  #   kubectl apply -f base/project-homelab.yaml
 
 patches:
   # Enable KSOPS for SOPS decryption - ConfigMap

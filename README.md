@@ -1,5 +1,7 @@
 # ArgoCD GitOps Setup
 
+[![CodeFactor](https://www.codefactor.io/repository/github/aaronwittchen/argocd/badge)](https://www.codefactor.io/repository/github/aaronwittchen/argocd)
+
 Complete ArgoCD deployment for managing your Kubernetes applications via GitOps.
 
 ## Features

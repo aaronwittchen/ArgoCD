@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git # TODO: UPDATE LINK
     targetRevision: main
-    path: linkding
+    path: linkding/overlays/longhorn  # or overlays/local-path
 
   destination:
     server: https://kubernetes.default.svc

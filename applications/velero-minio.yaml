@@ -1,0 +1,29 @@
+# ArgoCD Application: Velero MinIO Storage
+# Note: Velero itself is installed via CLI, this just manages MinIO
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero-minio
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: '1'
+spec:
+  project: homelab
+
+  source:
+    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git  # TODO: UPDATE LINK
+    targetRevision: main
+    path: velero/base
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

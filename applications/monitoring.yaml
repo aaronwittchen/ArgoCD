@@ -12,7 +12,7 @@ spec:
   project: homelab
 
   source:
-    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git # TODO: UPDATE LINK
+    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git # UPDATE LINK
     targetRevision: main
     path: Prometheus & Grafana Setup/overlays/longhorn # or overlays/local-path
 

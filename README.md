@@ -52,10 +52,11 @@ kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -
 kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath="{.data.password}" | base64 -d
 
-# Port-forward UI
-kubectl port-forward svc/argocd-server -n argocd 8080:443
+# Port-forward UI (server runs in insecure/HTTP mode)
+kubectl port-forward svc/argocd-server -n argocd 8080:80
 
-# Access: https://localhost:8080
+# Access: http://localhost:8080
+# Or via Gateway: http://argo.k8s.home
 # Username: admin
 # Password: (from above)
 ```
@@ -170,35 +171,44 @@ creation_rules:
 
 This ensures only sensitive fields are encrypted, keeping the rest readable in git.
 
-## TLS Configuration
+## Gateway API (Envoy Gateway)
 
-### Default Setup
+This setup uses **Gateway API with Envoy Gateway** instead of the deprecated NGINX Ingress Controller.
 
-TLS is enabled by default in this setup:
+### Architecture
 
-- ArgoCD server runs with HTTPS enabled (not HTTP)
-- Ingress is configured for TLS with force-ssl-redirect
-- Hostname should be configured in the overlay for your environment
+- **GatewayClass**: Defines Envoy Gateway as the controller
+- **Gateway**: Gets a LoadBalancer IP from MetalLB
+- **HTTPRoute**: Routes traffic to ArgoCD server (replaces Ingress)
+
+### Verify Gateway Setup
+
+```bash
+# Check Gateway has an external IP
+kubectl get gateway -n envoy-gateway-system
+
+# Check HTTPRoute is attached
+kubectl get httproute -n argocd
+
+# Check the Gateway service
+kubectl get svc -n envoy-gateway-system
+```
 
 ### Configure Hostname
 
-Edit the overlay kustomization to set your hostname:
+Edit `base/httproute.yaml` to change the hostname:
 
-```bash
-# For local-path overlay
-# Edit: overlays/local-path/kustomization.yaml
-# Update the host values in the ingress patch
-
-# For production with cert-manager
-# Uncomment the cert-manager.io/cluster-issuer annotation in base/ingress.yaml
-# and create a ClusterIssuer (letsencrypt-prod recommended)
+```yaml
+spec:
+  hostnames:
+    - "argo.k8s.home"  # Change this
 ```
 
-### With cert-manager
+### TLS with cert-manager
 
 ```bash
 # Install cert-manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.0/cert-manager.yaml
 
 # Create ClusterIssuer for Let's Encrypt
 kubectl apply -f - <<EOF
@@ -214,12 +224,11 @@ spec:
       name: letsencrypt-prod
     solvers:
     - http01:
-        ingress:
-          class: nginx
+        gatewayHTTPRoute:
+          parentRefs:
+            - name: eg
+              namespace: envoy-gateway-system
 EOF
-
-# Uncomment the cert-manager annotation in base/ingress.yaml
-# cert-manager.io/cluster-issuer: "letsencrypt-prod"
 ```
 
 ## Projects & RBAC
@@ -378,8 +387,9 @@ argocd app create myapp \
 # Verify SOPS secret exists (but don't view it!)
 kubectl get secret sops-age-key -n argocd
 
-# Check ingress TLS configuration
-kubectl get ingress argocd-server -n argocd -o yaml | grep -A 5 tls
+# Check Gateway and HTTPRoute configuration
+kubectl get gateway -n envoy-gateway-system
+kubectl get httproute -n argocd -o yaml
 
 # Verify applications use homelab project
 kubectl get applications -n argocd -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.project}{"\n"}{end}'

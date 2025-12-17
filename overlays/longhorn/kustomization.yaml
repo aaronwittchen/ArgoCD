@@ -9,16 +9,13 @@ resources:
 # Optionally, you can add persistent storage for Redis
 # See examples/redis-persistent.yaml
 
-# Environment-specific ingress configuration
+# Environment-specific HTTPRoute configuration (Gateway API)
 # Update the hostname to match your environment
 #patches:
 #  - target:
-#      kind: Ingress
+#      kind: HTTPRoute
 #      name: argocd-server
 #    patch: |-
 #      - op: replace
-#        path: /spec/tls/0/hosts/0
-#        value: argocd.yourdomain.com  # TODO: Update to your domain
-#      - op: replace
-#        path: /spec/rules/0/host
-#        value: argocd.yourdomain.com  # TODO: Update to your domain
+#        path: /spec/hostnames/0
+#        value: argocd.yourdomain.com  # Update to your domain

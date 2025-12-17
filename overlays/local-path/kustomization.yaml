@@ -8,15 +8,12 @@ resources:
 # ArgoCD uses emptyDir by default for repo-server
 # No PVC patches needed for local-path
 
-# Environment-specific ingress configuration
+# Environment-specific HTTPRoute configuration (Gateway API)
 #patches:
 #  - target:
-#      kind: Ingress
+#      kind: HTTPRoute
 #      name: argocd-server
 #    patch: |-
 #      - op: replace
-#        path: /spec/tls/0/hosts/0
-#        value: argocd.yourdomain.com  # TODO: Update to your domain
-#      - op: replace
-#        path: /spec/rules/0/host
-#        value: argocd.yourdomain.com  # TODO: Update to your domain
+#        path: /spec/hostnames/0
+#        value: argocd.yourdomain.com  # Update to your domain

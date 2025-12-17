@@ -7,7 +7,9 @@ resources:
   - https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
   # Custom resources
   - namespace.yaml
-  - ingress.yaml
+  # Gateway API (replaces NGINX Ingress)
+  - gateway.yaml
+  - httproute.yaml
   # NOTE: sops-age-secret.yaml is a template only - create the secret manually!
   # See sops-age-secret.yaml for instructions
   # NOTE: project-homelab.yaml must be applied AFTER ArgoCD is running:
@@ -40,6 +42,13 @@ patches:
               cp /usr/local/bin/ksops /custom-tools/
               cp /usr/local/bin/kustomize /custom-tools/
               echo "KSOPS installation complete"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - mountPath: /custom-tools
               name: custom-tools

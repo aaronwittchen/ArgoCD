@@ -70,6 +70,13 @@ spec:
               mv /tmp/age/age /custom-tools/age
               mv /tmp/age/age-keygen /custom-tools/age-keygen
               chmod +x /custom-tools/age /custom-tools/age-keygen
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - mountPath: /custom-tools
               name: custom-tools

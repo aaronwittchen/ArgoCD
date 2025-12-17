@@ -18,12 +18,26 @@ spec:
               cp /usr/local/bin/ksops /custom-tools/
               cp /usr/local/bin/kustomize /custom-tools/
               echo "KSOPS installation complete"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - mountPath: /custom-tools
               name: custom-tools
 
       containers:
         - name: argocd-repo-server
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           # Mount the AGE key secret
           volumeMounts:
             - mountPath: /sops-age

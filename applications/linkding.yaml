@@ -12,9 +12,9 @@ spec:
   project: homelab
 
   source:
-    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git # TODO: UPDATE LINK
+    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git # UPDATE LINK
     targetRevision: main
-    path: linkding/overlays/longhorn  # or overlays/local-path
+    path: linkding/overlays/longhorn # or overlays/local-path
 
   destination:
     server: https://kubernetes.default.svc

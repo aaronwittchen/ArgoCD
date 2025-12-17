@@ -1,0 +1,27 @@
+# Gateway API Configuration for Envoy Gateway
+# Replaces NGINX Ingress Controller
+---
+# GatewayClass - defines which controller implements the Gateway
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: eg
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+# Gateway - the actual gateway instance (similar to ingress controller)
+# Gets a LoadBalancer IP from MetalLB
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: eg
+  namespace: envoy-gateway-system
+spec:
+  gatewayClassName: eg
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All

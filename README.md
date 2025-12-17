@@ -1,7 +1,7 @@
 # ArgoCD GitOps Setup
 
-[![Lines of Code](https://tokei.rs/b1/github/USERNAME/REPO-NAME)](https://github.com/USERNAME/REPO-NAME)
-[![License](https://img.shields.io/github/license/USERNAME/REPO-NAME)](https://github.com/USERNAME/REPO-NAME/blob/master/LICENSE)
+[![Lines of Code](https://tokei.rs/b1/github/aaronwittchen/ArgoCD)](https://github.com/aaronwittchen/ArgoCD)
+[![License](https://img.shields.io/github/license/aaronwittchen/ArgoCD)](https://github.com/aaronwittchen/ArgoCD/blob/master/LICENSE)
 [![GitHub last commit](https://img.shields.io/github/last-commit/aaronwittchen/ArgoCD?logo=github)](https://github.com/aaronwittchen/ArgoCD/commits/master)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5d4efbb0d525449c810ed5427a6910d5)](https://app.codacy.com/gh/aaronwittchen/ArgoCD/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/aaronwittchen/argocd/badge)](https://www.codefactor.io/repository/github/aaronwittchen/argocd)
@@ -66,7 +66,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:80
 
 # Access: http://localhost:8080
 # Or via Gateway: http://argo.k8s.home
-# Username: admin
+# aaronwittchen: admin
 # Password: (from above)
 ```
 
@@ -78,7 +78,7 @@ kubectl apply -f applications/monitoring.yaml
 
 # Or use CLI
 argocd app create monitoring \
-  --repo https://github.com/YOUR_USERNAME/YOUR_REPO.git \
+  --repo https://github.com/YOUR_aaronwittchen/YOUR_REPO.git \
   --path "Prometheus & Grafana Setup/overlays/local-path" \
   --dest-server https://kubernetes.default.svc \
   --dest-namespace monitoring \

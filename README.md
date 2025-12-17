@@ -1,6 +1,15 @@
 # ArgoCD GitOps Setup
 
+[![Lines of Code](https://tokei.rs/b1/github/USERNAME/REPO-NAME)](https://github.com/USERNAME/REPO-NAME)
+[![License](https://img.shields.io/github/license/USERNAME/REPO-NAME)](https://github.com/USERNAME/REPO-NAME/blob/master/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/aaronwittchen/ArgoCD?logo=github)](https://github.com/aaronwittchen/ArgoCD/commits/master)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5d4efbb0d525449c810ed5427a6910d5)](https://app.codacy.com/gh/aaronwittchen/ArgoCD/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/aaronwittchen/argocd/badge)](https://www.codefactor.io/repository/github/aaronwittchen/argocd)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)
 
 Complete ArgoCD deployment for managing your Kubernetes applications via GitOps.
 
@@ -201,7 +210,7 @@ Edit `base/httproute.yaml` to change the hostname:
 ```yaml
 spec:
   hostnames:
-    - "argo.k8s.home"  # Change this
+    - 'argo.k8s.home' # Change this
 ```
 
 ### TLS with cert-manager

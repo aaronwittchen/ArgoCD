@@ -49,6 +49,7 @@ patches:
           name: sops-age-key
           secret:
             secretName: sops-age-key
+            optional: true
       - op: add
         path: /spec/template/spec/volumes/-
         value:
@@ -82,7 +83,7 @@ patches:
           name: SOPS_AGE_KEY_FILE
           value: /sops-age/keys.txt
 
-  # Reduce resources for argocd-server
+  # Reduce resources for argocd-server and enable insecure mode for HTTP
   - target:
       kind: Deployment
       name: argocd-server
@@ -96,9 +97,9 @@ patches:
           limits:
             cpu: 200m
             memory: 256Mi
-
-  # TLS is now enabled via ingress - ArgoCD uses HTTPS by default
-  # Removed --insecure flag for better security
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: "--insecure"
 
   # Reduce resources for application-controller
   - target:

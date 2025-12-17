@@ -11,6 +11,8 @@
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)
 
+[![CircleCI](https://circleci.com/gh/aaronwittchen/ArgoCD.svg?style=svg)](https://circleci.com/gh/aaronwittchen/ArgoCD)
+
 Complete ArgoCD deployment for managing your Kubernetes applications via GitOps.
 
 ## Features

@@ -31,11 +31,11 @@ spec:
             requests:
               cpu: 50m
               memory: 64Mi
-              ephemeral-storage: 64Mi
+              ephemeral-storage: 128Mi
             limits:
               cpu: 100m
               memory: 128Mi
-              ephemeral-storage: 256Mi
+              ephemeral-storage: 512Mi
           volumeMounts:
             - mountPath: /custom-tools
               name: custom-tools
@@ -51,12 +51,12 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 128Mi
-              ephemeral-storage: 256Mi
+              memory: 256Mi
+              ephemeral-storage: 1Gi
             limits:
               cpu: 500m
               memory: 512Mi
-              ephemeral-storage: 1Gi
+              ephemeral-storage: 4Gi
           # Mount the AGE key secret
           volumeMounts:
             - mountPath: /sops-age

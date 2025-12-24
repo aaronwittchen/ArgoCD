@@ -25,7 +25,7 @@ patches:
         path: /data/kustomize.buildOptions
         value: "--enable-alpha-plugins --enable-exec"
 
-  # Enable KSOPS for SOPS decryption - Repo Server init container
+  # Enable KSOPS for SOPS decryption - Repo Server init containers
   - target:
       kind: Deployment
       name: argocd-repo-server
@@ -38,11 +38,34 @@ patches:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "Installing KSOPS and SOPS..."
+              echo "Installing KSOPS..."
               cp /usr/local/bin/ksops /custom-tools/
               cp /usr/local/bin/kustomize /custom-tools/
-              cp /usr/local/bin/sops /custom-tools/
               echo "KSOPS installation complete"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+              ephemeral-storage: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+              ephemeral-storage: 256Mi
+          volumeMounts:
+            - mountPath: /custom-tools
+              name: custom-tools
+      - op: add
+        path: /spec/template/spec/initContainers/-
+        value:
+          name: install-sops
+          image: alpine:3.20
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Installing SOPS..."
+              wget -qO /custom-tools/sops https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
+              chmod +x /custom-tools/sops
+              echo "SOPS installation complete"
           resources:
             requests:
               cpu: 50m

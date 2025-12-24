@@ -38,9 +38,10 @@ patches:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "Installing KSOPS..."
+              echo "Installing KSOPS and SOPS..."
               cp /usr/local/bin/ksops /custom-tools/
               cp /usr/local/bin/kustomize /custom-tools/
+              cp /usr/local/bin/sops /custom-tools/
               echo "KSOPS installation complete"
           resources:
             requests:
@@ -83,6 +84,12 @@ patches:
           mountPath: /usr/local/bin/kustomize
           name: custom-tools
           subPath: kustomize
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          mountPath: /usr/local/bin/sops
+          name: custom-tools
+          subPath: sops
       - op: add
         path: /spec/template/spec/containers/0/env/-
         value:

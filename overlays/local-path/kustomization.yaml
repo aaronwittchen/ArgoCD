@@ -9,7 +9,7 @@ resources:
 # No PVC patches needed for local-path
 
 # Environment-specific HTTPRoute configuration (Gateway API)
-#patches:
+# patches:
 #  - target:
 #      kind: HTTPRoute
 #      name: argocd-server

@@ -138,7 +138,9 @@ jobs:
                 -strict \
                 -ignore-missing-schemas \
                 -schema-location default \
-                -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'; then
+                -schema-location \
+                'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+              then
                 echo "  ✗ Schema validation failed for ${overlay}"
                 failed=1
               fi

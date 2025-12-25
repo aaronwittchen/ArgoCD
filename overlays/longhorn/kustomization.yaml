@@ -11,7 +11,7 @@ resources:
 
 # Environment-specific HTTPRoute configuration (Gateway API)
 # Update the hostname to match your environment
-#patches:
+# patches:
 #  - target:
 #      kind: HTTPRoute
 #      name: argocd-server

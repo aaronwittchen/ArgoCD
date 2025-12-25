@@ -2,6 +2,12 @@
 # This file defines how SOPS encrypts secrets in this repository
 #
 # Documentation: https://github.com/mozilla/sops
+#
+# Example usage:
+#   Encrypt a file:     sops -e -i secret.yaml
+#   Decrypt a file:     sops -d secret.yaml
+#   Edit encrypted:     sops secret.yaml
+#   Encrypt specific:   sops -e --encrypted-regex '^(data|stringData)$' -i secret.yaml
 
 creation_rules:
   # Default rule for all files
@@ -20,19 +26,3 @@ creation_rules:
   # - path_regex: secrets/.*\.enc\.yaml$
   #   age: >-
   #     age14c4u5y4uf869su746ghhear0ys4p6fuj6r0pvzrujj03dwh3xals40k30e
-# Example usage:
-#
-# Encrypt a file:
-#   sops -e -i secret.yaml
-#
-# Decrypt a file:
-#   sops -d secret.yaml
-#
-# Edit encrypted file:
-#   sops secret.yaml
-#
-# Create new encrypted file:
-#   sops secret.yaml
-#
-# Encrypt specific keys only:
-#   sops -e --encrypted-regex '^(data|stringData)$' -i secret.yaml

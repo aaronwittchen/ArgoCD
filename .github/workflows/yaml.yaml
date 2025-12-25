@@ -78,10 +78,7 @@ jobs:
           fi
 
       - name: Run yamllint
-        run: |
-          yamllint --format colored . || true
-          # Run again with strict for exit code
-          yamllint --strict . 2>&1 | head -100 || echo "::warning::YAML lint found issues"
+        run: yamllint --strict --format colored .
 
   kustomize-validate:
     name: Validate Kustomize
@@ -98,12 +95,19 @@ jobs:
       - name: Validate overlays
         run: |
           echo "Validating Kustomize overlays..."
+          failed=0
           for overlay in overlays/*/; do
             if [ -f "${overlay}kustomization.yaml" ]; then
               echo "Validating ${overlay}..."
-              kustomize build "$overlay" > /dev/null && echo "  ✓ ${overlay} is valid" || echo "  ✗ ${overlay} failed"
+              if kustomize build "$overlay" > /dev/null 2>&1; then
+                echo "  ✓ ${overlay} is valid"
+              else
+                echo "  ✗ ${overlay} failed"
+                failed=1
+              fi
             fi
           done
+          exit $failed
 
   kubeconform:
     name: Kubernetes Schema Validation
@@ -125,15 +129,19 @@ jobs:
       - name: Validate Kubernetes manifests
         run: |
           echo "Validating Kubernetes manifests..."
+          failed=0
           for overlay in overlays/*/; do
             if [ -f "${overlay}kustomization.yaml" ]; then
               echo "Validating ${overlay}..."
-              kustomize build "$overlay" 2>/dev/null | kubeconform \
+              if ! kustomize build "$overlay" 2>/dev/null | kubeconform \
                 -summary \
                 -strict \
                 -ignore-missing-schemas \
                 -schema-location default \
-                -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-                || echo "::warning::Schema validation issues in ${overlay}"
+                -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'; then
+                echo "  ✗ Schema validation failed for ${overlay}"
+                failed=1
+              fi
             fi
           done
+          exit $failed

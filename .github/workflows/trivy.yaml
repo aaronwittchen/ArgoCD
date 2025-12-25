@@ -1,0 +1,112 @@
+name: Trivy Security Scan
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+  schedule:
+    - cron: "0 6 * * 1" # Weekly on Monday at 6 AM UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trivy-iac:
+    name: Infrastructure as Code Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Run Trivy vulnerability scanner in IaC mode
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: "config"
+          scan-ref: "."
+          hide-progress: true
+          format: "sarif"
+          output: "trivy-iac-results.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM"
+          trivyignores: ".trivyignore"
+
+      - name: Upload Trivy IaC scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-iac-results.sarif"
+          category: "trivy-iac"
+
+  trivy-fs:
+    name: Filesystem Vulnerability Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Run Trivy vulnerability scanner in fs mode
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          hide-progress: true
+          format: "sarif"
+          output: "trivy-fs-results.sarif"
+          severity: "CRITICAL,HIGH"
+          trivyignores: ".trivyignore"
+
+      - name: Upload Trivy filesystem scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-fs-results.sarif"
+          category: "trivy-fs"
+
+  trivy-config-summary:
+    name: Configuration Summary
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Run Trivy scanner
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: "config"
+          scan-ref: "."
+          hide-progress: true
+          format: "table"
+          output: "trivy.txt"
+          severity: "CRITICAL,HIGH,MEDIUM"
+          trivyignores: ".trivyignore"
+
+      - name: Publish Trivy Output to Summary
+        run: |
+          if [[ -s trivy.txt ]]; then
+            {
+              echo "### Trivy Security Scan Results"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              cat trivy.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Trivy Security Scan Results" >> $GITHUB_STEP_SUMMARY
+            echo "No issues found." >> $GITHUB_STEP_SUMMARY
+          fi

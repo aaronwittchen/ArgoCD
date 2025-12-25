@@ -12,7 +12,7 @@ spec:
   project: homelab
 
   source:
-    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO.git # UPDATE LINK
+    repoURL: https://github.com/aaronwittchen/ArgoCD.git
     targetRevision: main
     path: Prometheus & Grafana Setup/overlays/longhorn # or overlays/local-path
 

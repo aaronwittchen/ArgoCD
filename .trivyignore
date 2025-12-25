@@ -1,0 +1,8 @@
+# Trivy ignore file
+# Add patterns here to ignore specific vulnerabilities or misconfigurations
+
+# Example: Ignore specific CVE
+# CVE-2021-12345
+
+# Example: Ignore specific misconfiguration
+# AVD-KSV-0001

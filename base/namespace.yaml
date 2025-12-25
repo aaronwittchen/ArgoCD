@@ -4,3 +4,12 @@ metadata:
   name: argocd
   labels:
     name: argocd
+    kubernetes.io/metadata.name: argocd
+    # Pod Security Standards - baseline allows common workloads
+    # Use 'restricted' for stricter security (may require workload adjustments)
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest

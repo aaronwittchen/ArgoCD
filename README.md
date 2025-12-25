@@ -14,6 +14,7 @@
 [![CircleCI](https://circleci.com/gh/aaronwittchen/ArgoCD.svg?style=svg)](https://circleci.com/gh/aaronwittchen/ArgoCD)
 [![ShellCheck](https://github.com/aaronwittchen/ArgoCD/actions/workflows/shellcheck.yaml/badge.svg)](https://github.com/aaronwittchen/ArgoCD/actions/workflows/shellcheck.yaml)
 [![YAML Lint](https://github.com/aaronwittchen/ArgoCD/actions/workflows/yaml.yaml/badge.svg)](https://github.com/aaronwittchen/ArgoCD/actions/workflows/yaml.yaml)
+[![Trivy Security Scan](https://github.com/aaronwittchen/ArgoCD/actions/workflows/trivy.yaml/badge.svg)](https://github.com/aaronwittchen/ArgoCD/actions/workflows/trivy.yaml)
 
 Complete ArgoCD deployment for managing your Kubernetes applications via GitOps.
 
@@ -82,7 +83,7 @@ kubectl apply -f applications/monitoring.yaml
 
 # Or use CLI
 argocd app create monitoring \
-  --repo https://github.com/YOUR_aaronwittchen/YOUR_REPO.git \
+  --repo https://github.com/aaronwittchen/ArgoCD.git \
   --path "Prometheus & Grafana Setup/overlays/local-path" \
   --dest-server https://kubernetes.default.svc \
   --dest-namespace monitoring \

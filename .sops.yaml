@@ -10,19 +10,7 @@
 #   Encrypt specific:   sops -e --encrypted-regex '^(data|stringData)$' -i secret.yaml
 
 creation_rules:
-  # Default rule for all files
   - path_regex: .*\.(yaml|yml|json|env|ini)$
     age: >-
       age14c4u5y4uf869su746ghhear0ys4p6fuj6r0pvzrujj03dwh3xals40k30e
-    # Encrypt these fields in Kubernetes secrets
     encrypted_regex: '^(data|stringData|password|token|key|secret|apiKey|apiToken|credential)$'
-
-  # Example: Different keys for different environments
-  # - path_regex: overlays/production/.*
-  #   age: >-
-  #     age1different_production_key_here
-
-  # Example: Encrypt entire files (no regex)
-  # - path_regex: secrets/.*\.enc\.yaml$
-  #   age: >-
-  #     age14c4u5y4uf869su746ghhear0ys4p6fuj6r0pvzrujj03dwh3xals40k30e

@@ -123,6 +123,18 @@ patches:
         value:
           name: SOPS_AGE_KEY_FILE
           value: /sops-age/keys.txt
+      # Set resources for repo-server (needs more ephemeral storage for git clones)
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+            ephemeral-storage: 1Gi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+            ephemeral-storage: 4Gi
 
   # Reduce resources for argocd-server and enable insecure mode for HTTP
   - target:

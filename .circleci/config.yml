@@ -11,7 +11,9 @@ executors:
 
 jobs:
   yaml-lint:
-    executor: default
+    docker:
+      - image: cimg/python:3.12
+    resource_class: small
     steps:
       - checkout
       - run:
@@ -19,7 +21,7 @@ jobs:
           command: pip install yamllint
       - run:
           name: Run yamllint
-          command: yamllint --format colored . || true
+          command: yamllint --strict --format colored .
 
   kustomize-validate:
     executor: default

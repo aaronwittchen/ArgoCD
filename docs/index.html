@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArgoCD GitOps Setup</title>
+    <style>
+      :root {
+        --bg-primary: #0d1117;
+        --bg-secondary: #161b22;
+        --bg-tertiary: #21262d;
+        --text-primary: #c9d1d9;
+        --text-secondary: #8b949e;
+        --accent: #58a6ff;
+        --accent-green: #3fb950;
+        --accent-orange: #d29922;
+        --border: #30363d;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica,
+          Arial, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      header {
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+        padding: 24px 0;
+      }
+      header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+      header p {
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+      .badges {
+        margin-top: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .badges img {
+        height: 20px;
+      }
+      main {
+        padding: 48px 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-top: 32px;
+      }
+      .card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 24px;
+      }
+      .card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .card p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+      .card ul {
+        margin-top: 12px;
+        padding-left: 20px;
+      }
+      .card li {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin: 4px 0;
+      }
+      h2 {
+        font-size: 1.3rem;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+      .section {
+        margin-top: 48px;
+      }
+      code {
+        background: var(--bg-tertiary);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+      }
+      pre {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        overflow-x: auto;
+        margin-top: 16px;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .status {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+      .status-green {
+        background: rgba(63, 185, 80, 0.2);
+        color: var(--accent-green);
+      }
+      .icon {
+        font-size: 1.2rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      th {
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+      footer {
+        border-top: 1px solid var(--border);
+        padding: 24px 0;
+        margin-top: 48px;
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <h1>ArgoCD GitOps Setup</h1>
+        <p>Production-ready GitOps deployment for Kubernetes homelab</p>
+        <div class="badges">
+          <img
+            src="https://img.shields.io/github/license/aaronwittchen/ArgoCD"
+            alt="License"
+          />
+          <img
+            src="https://img.shields.io/github/last-commit/aaronwittchen/ArgoCD?logo=github"
+            alt="Last Commit"
+          />
+          <img
+            src="https://github.com/aaronwittchen/ArgoCD/actions/workflows/yaml.yaml/badge.svg"
+            alt="YAML Lint"
+          />
+          <img
+            src="https://github.com/aaronwittchen/ArgoCD/actions/workflows/trivy.yaml/badge.svg"
+            alt="Trivy"
+          />
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <h2>Stack Overview</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>ArgoCD</h3>
+            <p>Declarative GitOps continuous delivery for Kubernetes</p>
+            <ul>
+              <li>App of Apps pattern</li>
+              <li>Automated sync & self-healing</li>
+              <li>RBAC & project management</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>SOPS Encryption</h3>
+            <p>Secrets encrypted in Git using AGE keys</p>
+            <ul>
+              <li>KSOPS plugin integration</li>
+              <li>Field-level encryption</li>
+              <li>Automatic decryption on sync</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Gateway API</h3>
+            <p>Modern ingress with Envoy Gateway</p>
+            <ul>
+              <li>HTTPRoute configuration</li>
+              <li>MetalLB LoadBalancer</li>
+              <li>TLS-ready architecture</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Security</h3>
+            <p>Hardened configuration for production</p>
+            <ul>
+              <li>NetworkPolicies</li>
+              <li>Pod Security Standards</li>
+              <li>Trivy scanning in CI</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Quick Start</h2>
+          <pre><code># Create namespace and SOPS secret
+kubectl create namespace argocd
+kubectl create secret generic sops-age-key \
+  --from-file=keys.txt=$HOME/.config/sops/age/keys.txt \
+  -n argocd
+
+# Deploy ArgoCD
+kubectl apply -k overlays/longhorn
+
+# Get admin password
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d</code></pre>
+        </div>
+
+        <div class="section">
+          <h2>Cluster Architecture</h2>
+          <table>
+            <tr>
+              <th>Component</th>
+              <th>Technology</th>
+            </tr>
+            <tr>
+              <td>Orchestration</td>
+              <td>Kubernetes (kubeadm)</td>
+            </tr>
+            <tr>
+              <td>CNI</td>
+              <td>Calico</td>
+            </tr>
+            <tr>
+              <td>Storage</td>
+              <td>Longhorn</td>
+            </tr>
+            <tr>
+              <td>Load Balancer</td>
+              <td>MetalLB</td>
+            </tr>
+            <tr>
+              <td>Ingress</td>
+              <td>Envoy Gateway</td>
+            </tr>
+            <tr>
+              <td>GitOps</td>
+              <td>ArgoCD v3.2.3</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2>Resources</h2>
+          <div class="grid">
+            <div class="card">
+              <h3>Documentation</h3>
+              <ul>
+                <li>
+                  <a href="https://argo-cd.readthedocs.io/">ArgoCD Docs</a>
+                </li>
+                <li>
+                  <a href="https://github.com/getsops/sops">SOPS GitHub</a>
+                </li>
+                <li>
+                  <a href="https://gateway-api.sigs.k8s.io/">Gateway API</a>
+                </li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Repository</h3>
+              <ul>
+                <li>
+                  <a href="https://github.com/aaronwittchen/ArgoCD"
+                    >GitHub Repository</a
+                  >
+                </li>
+                <li>
+                  <a href="https://github.com/aaronwittchen/ArgoCD/issues"
+                    >Issues</a
+                  >
+                </li>
+                <li>
+                  <a href="https://github.com/aaronwittchen/ArgoCD/actions"
+                    >CI/CD Status</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

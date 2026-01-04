@@ -41,6 +41,8 @@ spec:
             enabled: false
 
         # Homepage configuration
+        # Note: Using HTTP for internal homelab services (no TLS configured yet)
+        # TODO: Switch to HTTPS after setting up cert-manager
         config:
           # Bookmarks
           bookmarks:
@@ -53,25 +55,27 @@ spec:
                       href: https://argo-cd.readthedocs.io/
 
           # Services to display
-          services:
-            - Infrastructure:
-                - Longhorn:
-                    href: http://longhorn.k8s.home
-                    description: Storage Dashboard
-                    icon: longhorn.png
-                - ArgoCD:
-                    href: http://argocd.k8s.home
-                    description: GitOps Platform
-                    icon: argocd.png
-            - Applications:
-                - Linkding:
-                    href: http://linkding.k8s.home
-                    description: Bookmark Manager
-                    icon: linkding.png
-                - Nextcloud:
-                    href: http://nextcloud.k8s.home
-                    description: File Sync & Share
-                    icon: nextcloud.png
+          # TODO: Uncomment after setting up cert-manager with HTTPS
+          # services:
+          #   - Infrastructure:
+          #       - Longhorn:
+          #           href: https://longhorn.k8s.home
+          #           description: Storage Dashboard
+          #           icon: longhorn.png
+          #       - ArgoCD:
+          #           href: https://argocd.k8s.home
+          #           description: GitOps Platform
+          #           icon: argocd.png
+          #   - Applications:
+          #       - Linkding:
+          #           href: https://linkding.k8s.home
+          #           description: Bookmark Manager
+          #           icon: linkding.png
+          #       - Nextcloud:
+          #           href: https://nextcloud.k8s.home
+          #           description: File Sync & Share
+          #           icon: nextcloud.png
+          services: []
 
           # Widgets
           widgets:

@@ -1,4 +1,5 @@
 # ArgoCD Application: Homepage Dashboard
+# Uses jameswynn/homepage Helm chart
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -12,9 +13,98 @@ spec:
   project: homelab
 
   source:
-    repoURL: https://github.com/aaronwittchen/ArgoCD.git
-    targetRevision: main
-    path: Homepage/overlays/longhorn # or overlays/local-path
+    repoURL: https://jameswynn.github.io/helm-charts
+    chart: homepage
+    targetRevision: 2.0.1
+    helm:
+      valuesObject:
+        # Resource limits for homelab
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+        # Enable RBAC for Kubernetes widget
+        enableRbac: true
+
+        # Service account for Kubernetes API access
+        serviceAccount:
+          create: true
+          name: homepage
+
+        # Ingress - disabled (use Gateway API HTTPRoute separately)
+        ingress:
+          main:
+            enabled: false
+
+        # Homepage configuration
+        config:
+          # Bookmarks
+          bookmarks:
+            - Developer:
+                - GitHub:
+                    - abbr: GH
+                      href: https://github.com/
+                - ArgoCD Docs:
+                    - abbr: AD
+                      href: https://argo-cd.readthedocs.io/
+
+          # Services to display
+          services:
+            - Infrastructure:
+                - Longhorn:
+                    href: http://longhorn.k8s.home
+                    description: Storage Dashboard
+                    icon: longhorn.png
+                - ArgoCD:
+                    href: http://argocd.k8s.home
+                    description: GitOps Platform
+                    icon: argocd.png
+            - Applications:
+                - Linkding:
+                    href: http://linkding.k8s.home
+                    description: Bookmark Manager
+                    icon: linkding.png
+                - Nextcloud:
+                    href: http://nextcloud.k8s.home
+                    description: File Sync & Share
+                    icon: nextcloud.png
+
+          # Widgets
+          widgets:
+            - kubernetes:
+                cluster:
+                  show: true
+                  cpu: true
+                  memory: true
+                  showLabel: true
+                  label: "k8s-prod"
+                nodes:
+                  show: true
+                  cpu: true
+                  memory: true
+                  showLabel: true
+            - search:
+                provider: google
+                target: _blank
+
+          # Settings
+          settings:
+            title: Homelab
+            favicon: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/kubernetes.png
+            theme: dark
+            color: slate
+            headerStyle: clean
+            layout:
+              Infrastructure:
+                style: row
+                columns: 2
+              Applications:
+                style: row
+                columns: 2
 
   destination:
     server: https://kubernetes.default.svc
@@ -27,8 +117,7 @@ spec:
       allowEmpty: false
     syncOptions:
       - CreateNamespace=true
-      - PrunePropagationPolicy=foreground
-      - PruneLast=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:

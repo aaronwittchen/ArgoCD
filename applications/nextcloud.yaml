@@ -1,4 +1,5 @@
 # ArgoCD Application: Nextcloud
+# Uses official Nextcloud Helm chart
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -12,9 +13,103 @@ spec:
   project: homelab
 
   source:
-    repoURL: https://github.com/aaronwittchen/ArgoCD.git
-    targetRevision: main
-    path: nextcloud/overlays/longhorn # or overlays/local-path
+    repoURL: https://nextcloud.github.io/helm/
+    chart: nextcloud
+    targetRevision: 6.2.4
+    helm:
+      valuesObject:
+        # Nextcloud configuration
+        nextcloud:
+          host: nextcloud.k8s.home
+          username: admin
+          password: changeme  # Change this or use existingSecret
+          # existingSecret:
+          #   enabled: true
+          #   secretName: nextcloud-admin
+          #   usernameKey: username
+          #   passwordKey: password
+
+        # Resource limits for homelab
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+
+        # Persistence
+        persistence:
+          enabled: true
+          storageClass: longhorn
+          size: 20Gi
+
+        # Internal PostgreSQL database
+        internalDatabase:
+          enabled: false
+
+        postgresql:
+          enabled: true
+          global:
+            postgresql:
+              auth:
+                username: nextcloud
+                password: nextcloud-db-pass  # Change this
+                database: nextcloud
+          primary:
+            persistence:
+              enabled: true
+              storageClass: longhorn
+              size: 5Gi
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 300m
+                memory: 256Mi
+
+        # Redis for caching
+        redis:
+          enabled: true
+          auth:
+            enabled: true
+            password: redis-pass  # Change this
+          master:
+            persistence:
+              enabled: false
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+          replica:
+            replicaCount: 0
+
+        # Cron job for background tasks
+        cronjob:
+          enabled: true
+
+        # Ingress - disabled (use Gateway API HTTPRoute separately)
+        ingress:
+          enabled: false
+
+        # PHP configuration
+        phpClientHttpsFix:
+          enabled: true
+          protocol: https
+
+        # Liveness/Readiness probes
+        livenessProbe:
+          enabled: true
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          enabled: true
+          initialDelaySeconds: 60
+          periodSeconds: 30
 
   destination:
     server: https://kubernetes.default.svc
@@ -27,8 +122,7 @@ spec:
       allowEmpty: false
     syncOptions:
       - CreateNamespace=true
-      - PrunePropagationPolicy=foreground
-      - PruneLast=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
@@ -39,9 +133,5 @@ spec:
   ignoreDifferences:
     - group: apps
       kind: Deployment
-      jsonPointers:
-        - /spec/replicas
-    - group: apps
-      kind: StatefulSet
       jsonPointers:
         - /spec/replicas

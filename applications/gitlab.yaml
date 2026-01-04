@@ -1,4 +1,10 @@
 # ArgoCD Application: GitLab
+# Note: Official gitlab/gitlab Helm chart exists but is very resource-heavy (8GB+ RAM)
+# For homelab, consider:
+#   1. Keep current Kustomize setup (lightweight)
+#   2. Use gitlab/gitlab chart with minimal components
+#   3. Use Gitea/Forgejo as lighter alternative (has Helm chart)
+# Current: Using Kustomize manifests for resource efficiency
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

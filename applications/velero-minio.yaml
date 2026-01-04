@@ -1,5 +1,5 @@
-# ArgoCD Application: Velero MinIO Storage
-# Note: Velero itself is installed via CLI, this just manages MinIO
+# ArgoCD Application: MinIO for Velero Backups
+# Uses official MinIO Helm chart
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -13,9 +13,60 @@ spec:
   project: homelab
 
   source:
-    repoURL: https://github.com/aaronwittchen/ArgoCD.git
-    targetRevision: main
-    path: velero/base
+    repoURL: https://charts.min.io/
+    chart: minio
+    targetRevision: 5.3.0
+    helm:
+      valuesObject:
+        # Deployment mode - standalone for homelab
+        mode: standalone
+
+        # Root credentials (change these!)
+        rootUser: minioadmin
+        rootPassword: minioadmin123  # Change this or use existingSecret
+        # existingSecret: minio-credentials
+
+        # Resource limits for homelab
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+        # Persistence
+        persistence:
+          enabled: true
+          storageClass: longhorn
+          size: 20Gi
+
+        # Create velero bucket automatically
+        buckets:
+          - name: velero
+            policy: none
+            purge: false
+
+        # Service account for velero
+        users:
+          - accessKey: velero
+            secretKey: velero-secret-key  # Change this
+            policy: readwrite
+
+        # Disable console for resource savings (enable if needed)
+        console:
+          enabled: true
+
+        # Metrics for Prometheus
+        metrics:
+          serviceMonitor:
+            enabled: false  # Enable if using prometheus-operator
+
+        # Ingress - disabled (use Gateway API HTTPRoute if needed)
+        ingress:
+          enabled: false
+        consoleIngress:
+          enabled: false
 
   destination:
     server: https://kubernetes.default.svc
@@ -27,3 +78,10 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

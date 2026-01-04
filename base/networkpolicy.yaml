@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: argocd-server-ingress
+  name: argocd-server-network
   namespace: argocd
 spec:
   podSelector:
@@ -9,6 +9,7 @@ spec:
       app.kubernetes.io/name: argocd-server
   policyTypes:
     - Ingress
+    - Egress
   ingress:
     # Allow from Envoy Gateway
     - from:
@@ -26,11 +27,40 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow communication to Kubernetes API server
+    - to:
+        - ipBlock:
+            cidr: 192.168.68.120/32
+      ports:
+        - protocol: TCP
+          port: 6443
+    # Allow HTTPS for webhooks and external services
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow communication within argocd namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: argocd-repo-server-ingress
+  name: argocd-repo-server-network
   namespace: argocd
 spec:
   podSelector:
@@ -38,6 +68,7 @@ spec:
       app.kubernetes.io/name: argocd-repo-server
   policyTypes:
     - Ingress
+    - Egress
   ingress:
     # Allow from argocd components only
     - from:
@@ -47,6 +78,35 @@ spec:
       ports:
         - protocol: TCP
           port: 8081
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow HTTPS for Git repositories (GitHub, GitLab, etc.)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow SSH for Git repositories
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 22
+    # Allow HTTP for Helm repos and other resources
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

@@ -1,21 +1,33 @@
 # HTTPRoute for ArgoCD Server
-# Replaces the old Ingress resource
+# Routes traffic through Istio cluster-gateway
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: argocd-server
-  namespace: argocd
+  name: argocd-route
+  namespace: istio-system
 spec:
   parentRefs:
-    - name: eg
-      namespace: envoy-gateway-system
+    - name: cluster-gateway
+      namespace: istio-system
   hostnames:
-    - "argo.k8s.home"
+    - "argocd.k8s.local"
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
+    - backendRefs:
         - name: argocd-server
+          namespace: argocd
           port: 80
+---
+# ReferenceGrant to allow istio-system HTTPRoute to reference argocd services
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-istio-system
+  namespace: argocd
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: istio-system
+  to:
+    - group: ""
+      kind: Service

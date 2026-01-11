@@ -4,12 +4,11 @@ namespace: argocd
 
 resources:
   # Official ArgoCD installation
-  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.2.3/manifests/install.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.3/manifests/install.yaml
   # Custom resources
   - namespace.yaml
   - networkpolicy.yaml
-  # Gateway API (replaces NGINX Ingress)
-  - gateway.yaml
+  # HTTPRoute for Istio Gateway (uses existing cluster-gateway in istio-system)
   - httproute.yaml
   # NOTE: sops-age-secret.yaml is a template only - create the secret manually!
   # See sops-age-secret.yaml for instructions
@@ -17,14 +16,17 @@ resources:
   #   kubectl apply -f base/project-homelab.yaml
 
 patches:
-  # Enable KSOPS for SOPS decryption - ConfigMap
+  # Enable KSOPS for SOPS decryption - ConfigMap (strategic merge patch)
   - target:
       kind: ConfigMap
       name: argocd-cm
     patch: |-
-      - op: add
-        path: /data/kustomize.buildOptions
-        value: "--enable-alpha-plugins --enable-exec"
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: argocd-cm
+      data:
+        kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
 
   # Enable KSOPS for SOPS decryption - Repo Server init containers
   - target:
@@ -43,6 +45,15 @@ patches:
               cp /usr/local/bin/ksops /custom-tools/
               cp /usr/local/bin/kustomize /custom-tools/
               echo "KSOPS installation complete"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 999
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           resources:
             requests:
               cpu: 50m
@@ -67,6 +78,15 @@ patches:
               wget -qO /custom-tools/sops https://github.com/getsops/sops/releases/download/v3.11.0/sops-v3.11.0.linux.amd64
               chmod +x /custom-tools/sops
               echo "SOPS installation complete"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65534
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           resources:
             requests:
               cpu: 50m

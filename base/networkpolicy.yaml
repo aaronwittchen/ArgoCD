@@ -11,11 +11,11 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow from Envoy Gateway
+    # Allow from Istio Gateway
     - from:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: envoy-gateway-system
+              kubernetes.io/metadata.name: istio-system
       ports:
         - protocol: TCP
           port: 8080
@@ -38,14 +38,21 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # Allow communication to Kubernetes API server
+    # Allow communication to Kubernetes API server (control plane nodes)
     - to:
         - ipBlock:
-            cidr: 192.168.68.120/32
+            cidr: 192.168.68.0/24
       ports:
         - protocol: TCP
           port: 6443
-    # Allow HTTPS for webhooks and external services
+    # Allow communication to Kubernetes API service (ClusterIP)
+    - to:
+        - ipBlock:
+            cidr: 10.96.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow HTTPS within cluster
     - to:
         - namespaceSelector: {}
       ports:
@@ -89,22 +96,29 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # Allow HTTPS for Git repositories (GitHub, GitLab, etc.)
+    # Allow HTTPS/SSH for external Git repositories (GitHub, GitLab, etc.)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 22
+        - protocol: TCP
+          port: 80
+    # Allow within cluster
     - to:
         - namespaceSelector: {}
       ports:
         - protocol: TCP
           port: 443
-    # Allow SSH for Git repositories
-    - to:
-        - namespaceSelector: {}
-      ports:
         - protocol: TCP
           port: 22
-    # Allow HTTP for Helm repos and other resources
-    - to:
-        - namespaceSelector: {}
-      ports:
         - protocol: TCP
           port: 80
 ---

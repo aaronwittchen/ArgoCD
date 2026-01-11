@@ -121,6 +121,14 @@ spec:
           port: 22
         - protocol: TCP
           port: 80
+    # Allow Redis access within argocd namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd
+      ports:
+        - protocol: TCP
+          port: 6379
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

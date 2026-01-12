@@ -41,8 +41,6 @@ spec:
             enabled: false
 
         # Homepage configuration
-        # Note: Using HTTP for internal homelab services (no TLS configured yet)
-        # TODO: Switch to HTTPS after setting up cert-manager
         config:
           # Bookmarks
           bookmarks:
@@ -55,7 +53,6 @@ spec:
                       href: https://argo-cd.readthedocs.io/
 
           # Services to display
-          # TODO: Uncomment after setting up cert-manager with HTTPS
           # services:
           #   - Infrastructure:
           #       - Longhorn:

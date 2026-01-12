@@ -3,7 +3,6 @@ name: ShellCheck
 on:
   push:
     branches:
-      - master
       - main
     paths:
       - "**/*.sh"
@@ -11,7 +10,6 @@ on:
       - .github/workflows/shellcheck.yaml
   pull_request:
     branches:
-      - master
       - main
     paths:
       - "**/*.sh"

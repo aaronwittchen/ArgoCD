@@ -1,8 +1,8 @@
 # ArgoCD GitOps Setup
 
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)
-[![License](https://img.shields.io/github/license/aaronwittchen/ArgoCD)](https://github.com/aaronwittchen/ArgoCD/blob/master/LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/aaronwittchen/ArgoCD?logo=github)](https://github.com/aaronwittchen/ArgoCD/commits/master)
+[![License](https://img.shields.io/github/license/aaronwittchen/ArgoCD)](https://github.com/aaronwittchen/ArgoCD/blob/main/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/aaronwittchen/ArgoCD?logo=github)](https://github.com/aaronwittchen/ArgoCD/commits/main)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5d4efbb0d525449c810ed5427a6910d5)](https://app.codacy.com/gh/aaronwittchen/ArgoCD/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/aaronwittchen/argocd/badge)](https://www.codefactor.io/repository/github/aaronwittchen/argocd)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=aaronwittchen_ArgoCD&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=aaronwittchen_ArgoCD)

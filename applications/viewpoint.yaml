@@ -1,0 +1,47 @@
+# ArgoCD Application: Viewpoint
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: viewpoint
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: '3'
+    argocd-image-updater.argoproj.io/image-list: frontend=ghcr.io/aaronwittchen/viewpoint-frontend,backend=ghcr.io/aaronwittchen/viewpoint-backend
+    argocd-image-updater.argoproj.io/frontend.update-strategy: latest
+    argocd-image-updater.argoproj.io/backend.update-strategy: latest
+    argocd-image-updater.argoproj.io/write-back-method: argocd
+spec:
+  project: homelab
+
+  source:
+    repoURL: https://github.com/aaronwittchen/Viewpoint.git
+    targetRevision: main
+    path: k8s/overlays/longhorn
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: viewpoint
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

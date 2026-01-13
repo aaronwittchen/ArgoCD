@@ -1,0 +1,16 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: viewpoint
+  namespace: argocd
+spec:
+  namespace: argocd
+  applicationRefs:
+    - namePattern: viewpoint
+      images:
+        - alias: frontend
+          imageName: ghcr.io/aaronwittchen/viewpoint-frontend:v0.1.0
+        - alias: backend
+          imageName: ghcr.io/aaronwittchen/viewpoint-backend:v0.1.0
+  writeBackConfig:
+    method: argocd

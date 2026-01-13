@@ -1,8 +1,8 @@
-# ArgoCD Application: Viewpoint
+# ArgoCD Application: Jenkins CI/CD
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: viewpoint
+  name: jenkins
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -12,13 +12,13 @@ spec:
   project: homelab
 
   source:
-    repoURL: https://github.com/aaronwittchen/Viewpoint.git
+    repoURL: https://github.com/aaronwittchen/ArgoCD.git  # Update to your repo
     targetRevision: main
-    path: k8s/overlays/longhorn
+    path: jenkins-setup/overlays/longhorn  # or overlays/local-path
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: viewpoint
+    namespace: jenkins
 
   syncPolicy:
     automated:
